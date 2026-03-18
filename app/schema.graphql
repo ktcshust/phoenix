@@ -2295,6 +2295,9 @@ type Project implements Node {
   Count of root CHAIN spans (user messages/requests processed). Each LangGraph/LangChain graph invocation creates one root CHAIN span.
   """
   messageCount(timeRange: TimeRange, filterCondition: String, sessionFilterCondition: String): Int!
+
+  """Count of LLM spans (total LLM API calls across all traces)."""
+  llmRequestCount(timeRange: TimeRange, filterCondition: String, sessionFilterCondition: String): Int!
   tokenCountTotal(timeRange: TimeRange, filterCondition: String): Float!
   tokenCountPrompt(timeRange: TimeRange, filterCondition: String): Float!
   tokenCountCompletion(timeRange: TimeRange, filterCondition: String): Float!

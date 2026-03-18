@@ -14,7 +14,7 @@ from phoenix.server.session_filters import get_filtered_session_rowids_subquery
 from phoenix.server.types import DbSessionFactory
 from phoenix.trace.dsl import SpanFilter
 
-Kind: TypeAlias = Literal["span", "trace", "message"]
+Kind: TypeAlias = Literal["span", "trace", "message", "llm_request"]
 ProjectRowId: TypeAlias = int
 TimeInterval: TypeAlias = tuple[Optional[datetime], Optional[datetime]]
 FilterCondition: TypeAlias = Optional[str]
@@ -130,6 +130,15 @@ def _get_stmt(
         stmt = stmt.join(models.Span)
         stmt = stmt.where(models.Span.parent_id.is_(None))
         stmt = stmt.where(func.upper(models.Span.span_kind) == "CHAIN")
+        if filter_condition:
+            sf = SpanFilter(filter_condition)
+            stmt = sf(stmt)
+        stmt = stmt.add_columns(func.count().label("count"))
+    elif kind == "llm_request":
+        # Count all LLM spans = total LLM API calls
+        time_column = models.Span.start_time
+        stmt = stmt.join(models.Span)
+        stmt = stmt.where(func.upper(models.Span.span_kind) == "LLM")
         if filter_condition:
             sf = SpanFilter(filter_condition)
             stmt = sf(stmt)

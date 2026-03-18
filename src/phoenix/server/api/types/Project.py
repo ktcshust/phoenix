@@ -214,6 +214,31 @@ class Project(Node):
             ),
         )
 
+    @strawberry.field(
+        description="Count of LLM spans (total LLM API calls across all traces)."
+    )
+    async def llm_request_count(
+        self,
+        info: Info[Context, None],
+        time_range: Optional[TimeRange] = UNSET,
+        filter_condition: Optional[str] = UNSET,
+        session_filter_condition: Optional[str] = UNSET,
+    ) -> int:
+        if filter_condition and session_filter_condition:
+            raise BadRequest(
+                "Both a filter condition and session filter condition "
+                "cannot be applied at the same time"
+            )
+        return await info.context.data_loaders.record_counts.load(
+            (
+                "llm_request",
+                self.id,
+                time_range or None,
+                filter_condition or None,
+                session_filter_condition or None,
+            ),
+        )
+
     @strawberry.field
     async def token_count_total(
         self,

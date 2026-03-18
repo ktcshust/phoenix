@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<43127a8771b5850b9be848e38367f639>>
+ * @generated SignedSource<<90c3e12466b9381a41585fed48cd02d0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -150,6 +150,13 @@ return {
                 "storageKey": null
               },
               {
+                "alias": "timeRangeLlmRequestCount",
+                "args": (v3/*: any*/),
+                "kind": "ScalarField",
+                "name": "llmRequestCount",
+                "storageKey": null
+              },
+              {
                 "alias": null,
                 "args": (v3/*: any*/),
                 "concreteType": "SpanCostSummary",
@@ -249,12 +256,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "76fc7df6560a5e77ea2e57ff5a2de88c",
+    "cacheID": "85689c2d449d4e269a884809b628b5d0",
     "id": null,
     "metadata": {},
     "name": "ProjectPageQuery",
     "operationKind": "query",
-    "text": "query ProjectPageQuery(\n  $id: ID!\n  $timeRange: TimeRange!\n) {\n  project: node(id: $id) {\n    __typename\n    ... on Project {\n      ...ProjectPageHeader_stats\n      ...StreamToggle_data\n    }\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  timeRangeMessageCount: messageCount(timeRange: $timeRange)\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n\nfragment StreamToggle_data on Project {\n  streamingLastUpdatedAt\n  id\n}\n"
+    "text": "query ProjectPageQuery(\n  $id: ID!\n  $timeRange: TimeRange!\n) {\n  project: node(id: $id) {\n    __typename\n    ... on Project {\n      ...ProjectPageHeader_stats\n      ...StreamToggle_data\n    }\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  timeRangeMessageCount: messageCount(timeRange: $timeRange)\n  timeRangeLlmRequestCount: llmRequestCount(timeRange: $timeRange)\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n\nfragment StreamToggle_data on Project {\n  streamingLastUpdatedAt\n  id\n}\n"
   }
 };
 })();

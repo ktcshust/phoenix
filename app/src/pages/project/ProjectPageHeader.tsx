@@ -43,6 +43,7 @@ export function ProjectPageHeader(props: {
       @refetchable(queryName: "ProjectPageHeaderQuery") {
         timeRangeTraceCount: traceCount(timeRange: $timeRange)
         timeRangeMessageCount: messageCount(timeRange: $timeRange)
+        timeRangeLlmRequestCount: llmRequestCount(timeRange: $timeRange)
         costSummary(timeRange: $timeRange) {
           total {
             cost
@@ -142,6 +143,14 @@ export function ProjectPageHeader(props: {
               </Text>
               <Text size="L" fontFamily="mono">
                 {intFormatter(data?.timeRangeMessageCount)}
+              </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text elementType="h3" size="S" color="text-700">
+                Total LLM Requests
+              </Text>
+              <Text size="L" fontFamily="mono">
+                {intFormatter(data?.timeRangeLlmRequestCount)}
               </Text>
             </Flex>
             <Flex direction="column" flex="none">
