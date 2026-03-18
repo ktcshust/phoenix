@@ -5,6 +5,9 @@ import {
   Route,
 } from "react-router";
 import { RouterProvider } from "react-router/dom";
+import { lazy, Suspense } from "react";
+
+import { Loading } from "@phoenix/components";
 
 import { AgentsPage } from "@phoenix/pages/agents/AgentsPage";
 import type { DatasetEvaluatorDetailsLoaderData } from "@phoenix/pages/dataset/evaluators/datasetEvaluatorDetailsLoader";
@@ -82,8 +85,8 @@ import {
   SupportPage,
   TracePage,
 } from "./pages";
-import { GraphQLPage } from "./pages/apis/GraphQLPage";
-import { RestAPIPage } from "./pages/apis/RestAPIPage";
+import { GraphQLPage, RestAPIPage } from "./pages/apis";
+
 import { Layout } from "./pages/Layout";
 import { layoutLoader } from "./pages/layoutLoader";
 import { ProjectConfigPage } from "./pages/project/ProjectConfigPage";
@@ -101,6 +104,20 @@ import { spanRedirectLoader } from "./pages/redirects/spanRedirectLoader";
 import { traceRedirectLoader } from "./pages/redirects/traceRedirectLoader";
 import { settingsDataPageLoader } from "./pages/settings/settingsDataPageLoader";
 import { sessionLoader } from "./pages/trace/sessionLoader";
+
+// ─── Lazy-loaded monitor pages (split into separate chunks) ──────────────────
+const LazySystemMonitorPage = lazy(() =>
+  import("./pages/apis/SystemMonitorPage").then((m) => ({ default: m.SystemMonitorPage }))
+);
+const LazyGpuMonitorPage = lazy(() =>
+  import("./pages/apis/GpuMonitorPage").then((m) => ({ default: m.GpuMonitorPage }))
+);
+const LazyNetworkMonitorPage = lazy(() =>
+  import("./pages/apis/NetworkMonitorPage").then((m) => ({ default: m.NetworkMonitorPage }))
+);
+const LazyDiskMonitorPage = lazy(() =>
+  import("./pages/apis/DiskMonitorPage").then((m) => ({ default: m.DiskMonitorPage }))
+);
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -323,6 +340,34 @@ const router = createBrowserRouter(
             element={<GraphQLPage />}
             handle={{
               crumb: () => "GraphQL",
+            }}
+          />
+          <Route
+            path="/apis/monitor"
+            element={<Suspense fallback={<Loading />}><LazySystemMonitorPage /></Suspense>}
+            handle={{
+              crumb: () => "Monitor",
+            }}
+          />
+          <Route
+            path="/apis/gpu-monitor"
+            element={<Suspense fallback={<Loading />}><LazyGpuMonitorPage /></Suspense>}
+            handle={{
+              crumb: () => "GPU Monitor",
+            }}
+          />
+          <Route
+            path="/apis/network-monitor"
+            element={<Suspense fallback={<Loading />}><LazyNetworkMonitorPage /></Suspense>}
+            handle={{
+              crumb: () => "Network Monitor",
+            }}
+          />
+          <Route
+            path="/apis/disk-monitor"
+            element={<Suspense fallback={<Loading />}><LazyDiskMonitorPage /></Suspense>}
+            handle={{
+              crumb: () => "Disk I/O Monitor",
             }}
           />
           <Route

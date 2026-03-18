@@ -314,10 +314,15 @@ def main() -> None:
                 target=send_dataset_fixtures,
                 args=(f"http://{host}:{port}", dataset_fixtures),
             ).start()
-    if enable_prometheus := get_env_enable_prometheus():
-        from phoenix.server.prometheus import start_prometheus
+    # Always start metric collection so Prometheus gauges and history ring-buffers
+    # are populated. The HTTP scrape endpoint (:9090/metrics) is only exposed
+    # when PHOENIX_ENABLE_PROMETHEUS=true.
+    from phoenix.server.prometheus import start_collection, start_prometheus_http
 
-        start_prometheus()
+    start_collection()
+    enable_prometheus = get_env_enable_prometheus()
+    if enable_prometheus:
+        start_prometheus_http()
 
     engine = create_engine(
         connection_str=db_connection_str,

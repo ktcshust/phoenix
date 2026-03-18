@@ -187,6 +187,38 @@ function SideNav() {
               isExpanded={isSideNavExpanded}
             />
           </li>
+          <li key="monitor">
+            <NavLink
+              to="/apis/monitor"
+              text="Monitor"
+              leadingVisual={<Icon svg={<Icons.BarChartOutline />} />}
+              isExpanded={isSideNavExpanded}
+            />
+          </li>
+          <li key="gpu-monitor">
+            <NavLink
+              to="/apis/gpu-monitor"
+              text="GPU Monitor"
+              leadingVisual={<Icon svg={<Icons.Server />} />}
+              isExpanded={isSideNavExpanded}
+            />
+          </li>
+          <li key="network-monitor">
+            <NavLink
+              to="/apis/network-monitor"
+              text="Network I/O"
+              leadingVisual={<Icon svg={<Icons.ArrowUpDown />} />}
+              isExpanded={isSideNavExpanded}
+            />
+          </li>
+          <li key="disk-monitor">
+            <NavLink
+              to="/apis/disk-monitor"
+              text="Disk I/O"
+              leadingVisual={<Icon svg={<Icons.DatabaseOutline />} />}
+              isExpanded={isSideNavExpanded}
+            />
+          </li>
         </ul>
         <ul css={bottomLinksCSS}>
           <li key="github">

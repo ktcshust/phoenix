@@ -5,6 +5,7 @@ import json
 import logging
 import mimetypes
 import os
+import subprocess
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -29,6 +30,7 @@ from typing import (
 from urllib.parse import urlparse
 
 import grpc
+import psutil
 import strawberry
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,6 +61,7 @@ from phoenix.config import (
     ENV_PHOENIX_CSRF_TRUSTED_ORIGINS,
     SERVER_DIR,
     OAuth2ClientConfig,
+    get_working_dir,
     get_env_allow_external_resources,
     get_env_allowed_providers,
     get_env_csrf_trusted_origins,
@@ -678,6 +681,328 @@ async def check_readyz(request: Request) -> JSONResponse:
         logger.error(f"Database health check failed: {e}")
         raise HTTPException(status_code=503, detail="database unreachable")
     return JSONResponse({})
+
+
+@router.get("/api/system/metrics_psutil")
+async def system_metrics_psutil(_: Request) -> JSONResponse:
+    """Returns basic host metrics using direct psutil sampling.
+    
+    **DEPRECATED**: Use `/api/system/metrics` instead (Prometheus-based, more accurate).
+
+    Notes:
+    - VRAM is only reported when `nvidia-smi` is available; otherwise it is null.
+    - Storage reports the filesystem that contains the Phoenix working directory.
+    - CPU is sampled for 100ms, may miss brief spikes between calls.
+    """
+
+    def get_vram_bytes() -> tuple[Optional[int], Optional[int]]:
+        try:
+            completed = subprocess.run(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=memory.used,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=1,
+            )
+        except Exception:
+            return None, None
+
+        lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+        if not lines:
+            return None, None
+
+        # Format per line: "<usedMiB>, <totalMiB>"
+        parts = [part.strip() for part in lines[0].split(",")]
+        if len(parts) < 2:
+            return None, None
+        try:
+            used_mib = int(float(parts[0]))
+            total_mib = int(float(parts[1]))
+        except Exception:
+            return None, None
+        if used_mib < 0 or total_mib <= 0:
+            return None, None
+        mib_to_bytes = 1024 * 1024
+        return used_mib * mib_to_bytes, total_mib * mib_to_bytes
+
+    cpu_percent = float(psutil.cpu_percent(interval=0.1))
+    ram = psutil.virtual_memory()
+    storage = psutil.disk_usage(str(get_working_dir()))
+    vram_used_bytes, vram_total_bytes = get_vram_bytes()
+
+    return JSONResponse(
+        {
+            "cpuPercent": cpu_percent,
+            "ramUsedBytes": int(ram.used),
+            "ramTotalBytes": int(ram.total),
+            "vramUsedBytes": vram_used_bytes,
+            "vramTotalBytes": vram_total_bytes,
+            "storageUsedBytes": int(storage.used),
+            "storageTotalBytes": int(storage.total),
+        }
+    )
+
+
+@router.get("/api/system/metrics")
+async def system_metrics(_: Request) -> JSONResponse:
+    """Returns host metrics from Prometheus (when enabled).
+    
+    This endpoint reads from Prometheus metrics which are:
+    - Updated every 1 second by background thread
+    - Container-aware (uses cgroup when available)
+    - More accurate than psutil sampling
+    
+    If Prometheus is not enabled, returns fallback data from psutil.
+
+    Notes:
+    - VRAM is only reported when `nvidia-smi` is available; otherwise it is null.
+    - Storage reports the filesystem that contains the Phoenix working directory.
+    """
+    from phoenix.server import prometheus
+    
+    # Default to psutil fallbacks
+    cpu_percent: float = float(psutil.cpu_percent(interval=0.01))
+    ram = psutil.virtual_memory()
+    ram_used_bytes: int = int(ram.used)
+    ram_total_bytes: int = int(ram.total)
+    vram_used_bytes: Optional[int] = None
+    vram_total_bytes: Optional[int] = None
+    storage = psutil.disk_usage(str(get_working_dir()))
+    storage_used_bytes: int = int(storage.used)
+    storage_total_bytes: int = int(storage.total)
+    
+    # Override defaults with Prometheus gauge values once the collection thread
+    # has run at least one tick (guard > 0 prevents using stale zero-init values).
+    try:
+        # CPU
+        if hasattr(prometheus.CPU_METRIC, "_value"):
+            v = float(prometheus.CPU_METRIC._value.get())
+            if v > 0:
+                cpu_percent = v
+
+        # RAM
+        if hasattr(prometheus.RAM_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.RAM_METRIC._metrics.items():
+                if label_tuple and label_tuple[0] == "virtual":
+                    v = int(metric_obj._value.get())
+                    if v > 0:
+                        ram_used_bytes = v
+
+        # VRAM
+        if hasattr(prometheus.VRAM_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.VRAM_METRIC._metrics.items():
+                if label_tuple:
+                    v = int(metric_obj._value.get())
+                    if v > 0:
+                        if label_tuple[0] == "used":
+                            vram_used_bytes = v
+                        elif label_tuple[0] == "total":
+                            vram_total_bytes = v
+
+        # Storage
+        if hasattr(prometheus.STORAGE_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.STORAGE_METRIC._metrics.items():
+                if label_tuple:
+                    v = int(metric_obj._value.get())
+                    if v > 0:
+                        if label_tuple[0] == "used":
+                            storage_used_bytes = v
+                        elif label_tuple[0] == "total":
+                            storage_total_bytes = v
+    except Exception:
+        pass
+
+    return JSONResponse(
+        {
+            "cpuPercent": cpu_percent,
+            "ramUsedBytes": ram_used_bytes,
+            "ramTotalBytes": ram_total_bytes,
+            "vramUsedBytes": vram_used_bytes,
+            "vramTotalBytes": vram_total_bytes,
+            "storageUsedBytes": storage_used_bytes,
+            "storageTotalBytes": storage_total_bytes,
+            "history": prometheus.get_system_history(),
+        }
+    )
+
+
+@router.get("/api/system/gpu_metrics")
+async def gpu_metrics(_: Request) -> JSONResponse:
+    """Returns GPU-specific metrics from Prometheus.
+
+    Reads from Prometheus gauges collected every 1 second by the background thread.
+    All fields are null when no NVIDIA GPU / nvidia-smi is available.
+    """
+    from phoenix.server import prometheus
+
+    gpu_utilization: Optional[float] = None
+    gpu_temperature: Optional[float] = None
+    gpu_power: Optional[float] = None
+    gpu_core_clock: Optional[int] = None
+    gpu_memory_clock: Optional[int] = None
+    gpu_vram_used: Optional[int] = None
+    gpu_vram_total: Optional[int] = None
+
+    try:
+        if hasattr(prometheus.GPU_UTILIZATION_METRIC, "_value"):
+            val = prometheus.GPU_UTILIZATION_METRIC._value.get()
+            if val is not None:
+                gpu_utilization = float(val)
+
+        if hasattr(prometheus.GPU_TEMPERATURE_METRIC, "_value"):
+            val = prometheus.GPU_TEMPERATURE_METRIC._value.get()
+            if val is not None:
+                gpu_temperature = float(val)
+
+        if hasattr(prometheus.GPU_POWER_METRIC, "_value"):
+            val = prometheus.GPU_POWER_METRIC._value.get()
+            if val is not None:
+                gpu_power = float(val)
+
+        if hasattr(prometheus.GPU_CLOCK_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.GPU_CLOCK_METRIC._metrics.items():
+                if label_tuple:
+                    val = metric_obj._value.get()
+                    if val is not None:
+                        if label_tuple[0] == "core":
+                            gpu_core_clock = int(val)
+                        elif label_tuple[0] == "memory":
+                            gpu_memory_clock = int(val)
+
+        if hasattr(prometheus.VRAM_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.VRAM_METRIC._metrics.items():
+                if label_tuple:
+                    val = metric_obj._value.get()
+                    if val is not None:
+                        if label_tuple[0] == "used":
+                            gpu_vram_used = int(val)
+                        elif label_tuple[0] == "total":
+                            gpu_vram_total = int(val)
+    except Exception:
+        pass
+
+    return JSONResponse(
+        {
+            "gpuUtilizationPercent": gpu_utilization,
+            "gpuTemperatureCelsius": gpu_temperature,
+            "gpuPowerDrawWatts": gpu_power,
+            "gpuCoreClockMhz": gpu_core_clock,
+            "gpuMemoryClockMhz": gpu_memory_clock,
+            "gpuVramUsedBytes": gpu_vram_used,
+            "gpuVramTotalBytes": gpu_vram_total,
+            "history": prometheus.get_gpu_history(),
+        }
+    )
+
+
+@router.get("/api/system/network_metrics")
+async def network_metrics(_: Request) -> JSONResponse:
+    """Returns host-level network I/O rates and TCP connection state counts.
+
+    Reads from Prometheus gauges collected every 1 second by the background
+    thread.  Rate fields (bytesSentPerSec, bytesRecvPerSec) are null on the
+    first poll cycle (no previous sample) or when collection fails.
+    TCP connection counts may be null if the OS restricts access to
+    /proc/net/tcp (e.g. inside a restricted container).
+    """
+    from phoenix.server import prometheus
+
+    bytes_sent: Optional[float] = None
+    bytes_recv: Optional[float] = None
+    tcp_established: Optional[int] = None
+    tcp_time_wait: Optional[int] = None
+    tcp_close_wait: Optional[int] = None
+
+    try:
+        if hasattr(prometheus.NETWORK_BYTES_SENT_METRIC, "_value"):
+            val = prometheus.NETWORK_BYTES_SENT_METRIC._value.get()
+            if val is not None:
+                bytes_sent = float(val)
+
+        if hasattr(prometheus.NETWORK_BYTES_RECV_METRIC, "_value"):
+            val = prometheus.NETWORK_BYTES_RECV_METRIC._value.get()
+            if val is not None:
+                bytes_recv = float(val)
+
+        if hasattr(prometheus.NETWORK_CONNECTIONS_METRIC, "_metrics"):
+            for label_tuple, metric_obj in prometheus.NETWORK_CONNECTIONS_METRIC._metrics.items():
+                if label_tuple:
+                    val = metric_obj._value.get()
+                    if val is not None:
+                        if label_tuple[0] == "ESTABLISHED":
+                            tcp_established = int(val)
+                        elif label_tuple[0] == "TIME_WAIT":
+                            tcp_time_wait = int(val)
+                        elif label_tuple[0] == "CLOSE_WAIT":
+                            tcp_close_wait = int(val)
+    except Exception:
+        pass
+
+    return JSONResponse(
+        {
+            "bytesSentPerSec": bytes_sent,
+            "bytesRecvPerSec": bytes_recv,
+            "tcpEstablished": tcp_established,
+            "tcpTimeWait": tcp_time_wait,
+            "tcpCloseWait": tcp_close_wait,
+            "history": prometheus.get_network_history(),
+        }
+    )
+
+
+@router.get("/api/system/disk_io_metrics")
+async def disk_io_metrics(_: Request) -> JSONResponse:
+    """Returns host-level disk I/O throughput, IOPS, busy %, and latency.
+
+    Reads from Prometheus gauges collected every 1 second by the background
+    thread. All fields are null on the first poll cycle (no previous sample),
+    when psutil cannot read disk counters, or on any other error.
+    busy_percent is Linux-specific (derived from /proc/diskstats busy_time);
+    it will be null on macOS/Windows.
+    """
+    from phoenix.server import prometheus
+
+    read_bytes_per_sec: Optional[float] = None
+    write_bytes_per_sec: Optional[float] = None
+    read_iops: Optional[float] = None
+    write_iops: Optional[float] = None
+    busy_percent: Optional[float] = None
+    read_latency_ms: Optional[float] = None
+    write_latency_ms: Optional[float] = None
+
+    def _gauge_val(gauge: object) -> Optional[float]:
+        if hasattr(gauge, "_value"):
+            v = gauge._value.get()  # type: ignore[union-attr]
+            return float(v) if v is not None else None
+        return None
+
+    try:
+        read_bytes_per_sec = _gauge_val(prometheus.DISK_READ_BYTES_METRIC)
+        write_bytes_per_sec = _gauge_val(prometheus.DISK_WRITE_BYTES_METRIC)
+        read_iops = _gauge_val(prometheus.DISK_READ_IOPS_METRIC)
+        write_iops = _gauge_val(prometheus.DISK_WRITE_IOPS_METRIC)
+        busy_percent = _gauge_val(prometheus.DISK_BUSY_PERCENT_METRIC)
+        read_latency_ms = _gauge_val(prometheus.DISK_READ_LATENCY_METRIC)
+        write_latency_ms = _gauge_val(prometheus.DISK_WRITE_LATENCY_METRIC)
+    except Exception:
+        pass
+
+    return JSONResponse(
+        {
+            "readBytesPerSec": read_bytes_per_sec,
+            "writeBytesPerSec": write_bytes_per_sec,
+            "readIops": read_iops,
+            "writeIops": write_iops,
+            "busyPercent": busy_percent,
+            "readLatencyMs": read_latency_ms,
+            "writeLatencyMs": write_latency_ms,
+            "history": prometheus.get_disk_history(),
+        }
+    )
 
 
 def create_graphql_router(
