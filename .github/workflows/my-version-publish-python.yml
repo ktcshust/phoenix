@@ -47,7 +47,7 @@ jobs:
       # ---------------------------------------------------------------
       # CÁCH 1 (Khuyên dùng): Trusted Publisher / OIDC - không cần lưu token
       #   Yêu cầu: vào https://pypi.org/manage/account/publishing/
-      #   thêm trusted publisher với repo ktcshust/phoenix, workflow: my-version-publish-python.yml
+      #   thêm trusted publisher với repo custom/phoenix, workflow: my-version-publish-python.yml
       # ---------------------------------------------------------------
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
