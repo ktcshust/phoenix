@@ -1,5 +1,5 @@
 [project]
-name = "arize-phoenix"
+name = "ktcshust-phoenix"
 description = "AI Observability and Evaluation"
 readme = "README.md"
 requires-python = ">=3.10, <3.14"
