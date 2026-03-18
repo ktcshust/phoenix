@@ -453,7 +453,7 @@ def gather_system_data() -> None:
             DISK_WRITE_LATENCY_METRIC.set(disk["write_latency_ms"])
 
         # ── Append to ring buffers for history ─────────────────
-        ram_total = psutil.virtual_memory().total
+        ram_total = estimate_memory_total_bytes()
         ram_pct = _clamp_pct((ram_used / ram_total * 100) if ram_total > 0 else None)
         vram_pct = None
         if (
@@ -533,6 +533,46 @@ def estimate_memory_usage_bytes() -> int:
     return psutil.virtual_memory().used
 
 
+def estimate_memory_total_bytes() -> int:
+    """Return the effective memory limit for the current process/container.
+
+    In a Docker container with a memory limit set (e.g. ``--memory 4g``),
+    returns the cgroup limit rather than the host physical RAM so that
+    percentage calculations reflect container headroom, not host headroom.
+
+    Falls back to ``psutil.virtual_memory().total`` when:
+    - Not on Linux
+    - cgroup memory limit is set to "unlimited" (v2 returns ``max``;
+      v1 returns a value close to 2^63 which exceeds physical RAM)
+    - Any read error
+    """
+    if sys.platform == "linux":
+        host_total = psutil.virtual_memory().total
+
+        if is_cgroup_v2():
+            try:
+                with open("/sys/fs/cgroup/memory.max", "r") as f:
+                    raw = f.read().strip()
+                if raw != "max":
+                    limit = int(raw)
+                    # Sanity check: ignore absurdly large values (unlimited sentinel)
+                    if 0 < limit < host_total:
+                        return limit
+            except Exception:
+                pass
+        else:
+            try:
+                with open("/sys/fs/cgroup/memory/memory.limit_in_bytes", "r") as f:
+                    limit = int(f.read().strip())
+                # cgroup v1 uses 2^63-4096 as the "unlimited" sentinel
+                if 0 < limit < host_total:
+                    return limit
+            except Exception:
+                pass
+
+    return psutil.virtual_memory().total
+
+
 def estimate_swap_usage_bytes() -> int:
     if sys.platform == "linux":
         # cgroup v2: swap usage file (if swap accounting is enabled).
@@ -556,7 +596,8 @@ def estimate_swap_usage_bytes() -> int:
 
 _previous_cpu_sample: dict[str, tuple[float, float]] = {}  # cache for previous cpu usage sample
 _previous_net_sample: dict = {}  # cache for previous network I/O counters
-_previous_disk_sample: dict = {}  # cache for previous disk I/O counters
+_previous_disk_sample: dict = {}  # cache for previous disk I/O counters (psutil fallback)
+_previous_cgroup_disk_sample: dict = {}  # cache for previous cgroup disk I/O sample
 
 
 def estimate_cpu_usage_percent() -> Optional[float]:
@@ -778,13 +819,100 @@ def collect_network_metrics() -> dict:
         return empty
 
 
+def _read_cgroup_io_stat() -> Optional[dict]:
+    """Read cumulative disk I/O counters from the container's cgroup.
+
+    On cgroup v2 reads ``/sys/fs/cgroup/io.stat``; on cgroup v1 reads
+    ``blkio.throttle.io_service_bytes`` and ``blkio.throttle.io_serviced``.
+    All device stats are summed to give container-wide totals.
+
+    Returns a dict with keys ``read_bytes``, ``write_bytes``, ``read_count``,
+    ``write_count``, or ``None`` if cgroup I/O accounting is unavailable.
+    """
+    if sys.platform != "linux":
+        return None
+
+    if is_cgroup_v2():
+        # Format per line: MAJ:MIN rbytes=N wbytes=N rios=N wios=N dbytes=N dios=N
+        try:
+            with open("/sys/fs/cgroup/io.stat", "r") as f:
+                content = f.read()
+            read_bytes = write_bytes = read_count = write_count = 0
+            for line in content.splitlines():
+                parts = line.strip().split()
+                if len(parts) < 2:
+                    continue
+                for part in parts[1:]:
+                    if "=" in part:
+                        k, _, v = part.partition("=")
+                        try:
+                            val = int(v)
+                        except ValueError:
+                            continue
+                        if k == "rbytes":
+                            read_bytes += val
+                        elif k == "wbytes":
+                            write_bytes += val
+                        elif k == "rios":
+                            read_count += val
+                        elif k == "wios":
+                            write_count += val
+            return {
+                "read_bytes": read_bytes,
+                "write_bytes": write_bytes,
+                "read_count": read_count,
+                "write_count": write_count,
+            }
+        except Exception:
+            return None
+    else:
+        # cgroup v1: blkio throttle accounting
+        try:
+            read_bytes = write_bytes = read_count = write_count = 0
+            with open("/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes", "r") as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) == 3 and parts[0] != "Total":
+                        try:
+                            val = int(parts[2])
+                        except ValueError:
+                            continue
+                        if parts[1] == "Read":
+                            read_bytes += val
+                        elif parts[1] == "Write":
+                            write_bytes += val
+            with open("/sys/fs/cgroup/blkio/blkio.throttle.io_serviced", "r") as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) == 3 and parts[0] != "Total":
+                        try:
+                            val = int(parts[2])
+                        except ValueError:
+                            continue
+                        if parts[1] == "Read":
+                            read_count += val
+                        elif parts[1] == "Write":
+                            write_count += val
+            return {
+                "read_bytes": read_bytes,
+                "write_bytes": write_bytes,
+                "read_count": read_count,
+                "write_count": write_count,
+            }
+        except Exception:
+            return None
+
+
 def collect_disk_io_metrics() -> dict:
     """Compute per-second disk I/O rates, busy %, and latency.
 
-    Rates and latency are derived from the delta between successive psutil
-    samples taken 1 second apart. Returns None for all fields on the first
-    call or any error. busy_time is Linux-specific (ms of disk busy time from
-    /proc/diskstats); on other platforms the field may be absent or 0.
+    Prefers container-accurate cgroup I/O accounting when available
+    (cgroup v2 ``io.stat`` or cgroup v1 ``blkio.throttle.*``).  Falls back to
+    ``psutil.disk_io_counters()`` which reads host-level ``/proc/diskstats``
+    (useful outside Docker or when cgroup I/O accounting is disabled).
+
+    busy_percent and latency are only available on the psutil path because
+    cgroup does not expose per-container disk busy time or operation latency.
 
     Returns a dict with keys:
         read_bytes_per_sec, write_bytes_per_sec,
@@ -792,7 +920,7 @@ def collect_disk_io_metrics() -> dict:
         busy_percent,
         read_latency_ms, write_latency_ms
     """
-    global _previous_disk_sample
+    global _previous_disk_sample, _previous_cgroup_disk_sample
 
     empty: dict = {
         "read_bytes_per_sec": None,
@@ -805,16 +933,61 @@ def collect_disk_io_metrics() -> dict:
     }
 
     try:
+        # ── Container-accurate path: cgroup I/O accounting ────────────────────
+        cgroup = _read_cgroup_io_stat()
+        if cgroup is not None:
+            now = time.monotonic()
+            read_bytes_per_sec: Optional[float] = None
+            write_bytes_per_sec: Optional[float] = None
+            read_iops: Optional[float] = None
+            write_iops: Optional[float] = None
+
+            if _previous_cgroup_disk_sample:
+                dt = now - _previous_cgroup_disk_sample["t"]
+                if dt > 0:
+                    read_bytes_per_sec = max(
+                        0.0,
+                        (cgroup["read_bytes"] - _previous_cgroup_disk_sample["read_bytes"]) / dt,
+                    )
+                    write_bytes_per_sec = max(
+                        0.0,
+                        (cgroup["write_bytes"] - _previous_cgroup_disk_sample["write_bytes"]) / dt,
+                    )
+                    delta_ri = cgroup["read_count"] - _previous_cgroup_disk_sample["read_count"]
+                    delta_wi = cgroup["write_count"] - _previous_cgroup_disk_sample["write_count"]
+                    read_iops = max(0.0, delta_ri / dt)
+                    write_iops = max(0.0, delta_wi / dt)
+
+            _previous_cgroup_disk_sample = {
+                "t": now,
+                "read_bytes": cgroup["read_bytes"],
+                "write_bytes": cgroup["write_bytes"],
+                "read_count": cgroup["read_count"],
+                "write_count": cgroup["write_count"],
+            }
+
+            # busy_percent and latency are not available per-container from cgroup
+            return {
+                "read_bytes_per_sec": read_bytes_per_sec,
+                "write_bytes_per_sec": write_bytes_per_sec,
+                "read_iops": read_iops,
+                "write_iops": write_iops,
+                "busy_percent": None,
+                "read_latency_ms": None,
+                "write_latency_ms": None,
+            }
+
+        # ── Fallback: host-level psutil (outside Docker or cgroup I/O disabled) ─
         disk = psutil.disk_io_counters()
         if disk is None:
             return empty
 
         now = time.monotonic()
 
-        read_bytes_per_sec: Optional[float] = None
-        write_bytes_per_sec: Optional[float] = None
-        read_iops: Optional[float] = None
-        write_iops: Optional[float] = None
+        read_bytes_per_sec = None
+        write_bytes_per_sec = None
+        read_iops = None
+        write_iops = None
         busy_percent: Optional[float] = None
         read_latency_ms: Optional[float] = None
         write_latency_ms: Optional[float] = None

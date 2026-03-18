@@ -769,7 +769,7 @@ async def system_metrics(_: Request) -> JSONResponse:
     cpu_percent: float = float(psutil.cpu_percent(interval=0.01))
     ram = psutil.virtual_memory()
     ram_used_bytes: int = int(ram.used)
-    ram_total_bytes: int = int(ram.total)
+    ram_total_bytes: int = prometheus.estimate_memory_total_bytes()
     vram_used_bytes: Optional[int] = None
     vram_total_bytes: Optional[int] = None
     storage = psutil.disk_usage(str(get_working_dir()))
