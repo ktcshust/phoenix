@@ -46,6 +46,7 @@ from .latency_ms_quantile import LatencyMsQuantileCache, LatencyMsQuantileDataLo
 from .latest_prompt_version_ids import LatestPromptVersionIdDataLoader
 from .min_start_or_max_end_times import MinStartOrMaxEndTimeCache, MinStartOrMaxEndTimeDataLoader
 from .num_child_spans import NumChildSpansDataLoader
+from .num_llm_spans_per_trace import NumLlmSpansPerTraceDataLoader
 from .num_spans_per_trace import NumSpansPerTraceDataLoader
 from .project_by_name import ProjectByNameDataLoader
 from .project_ids_by_trace_retention_policy_id import ProjectIdsByTraceRetentionPolicyIdDataLoader
@@ -123,6 +124,7 @@ __all__ = [
     "LatencyMsQuantileDataLoader",
     "MinStartOrMaxEndTimeDataLoader",
     "NumChildSpansDataLoader",
+    "NumLlmSpansPerTraceDataLoader",
     "NumSpansPerTraceDataLoader",
     "ProjectByNameDataLoader",
     "ProjectIdsByTraceRetentionPolicyIdDataLoader",

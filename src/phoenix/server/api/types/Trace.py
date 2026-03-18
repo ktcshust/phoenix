@@ -189,6 +189,13 @@ class Trace(Node):
         return await info.context.data_loaders.num_spans_per_trace.load(self.id)
 
     @strawberry.field
+    async def num_llm_spans(
+        self,
+        info: Info[Context, None],
+    ) -> int:
+        return await info.context.data_loaders.num_llm_spans_per_trace.load(self.id)
+
+    @strawberry.field
     async def spans(
         self,
         info: Info[Context, None],

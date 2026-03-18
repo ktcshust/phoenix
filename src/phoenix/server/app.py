@@ -117,6 +117,7 @@ from phoenix.server.api.dataloaders import (
     LatestPromptVersionIdDataLoader,
     MinStartOrMaxEndTimeDataLoader,
     NumChildSpansDataLoader,
+    NumLlmSpansPerTraceDataLoader,
     NumSpansPerTraceDataLoader,
     ProjectByNameDataLoader,
     ProjectIdsByTraceRetentionPolicyIdDataLoader,
@@ -1131,6 +1132,7 @@ def create_graphql_router(
                     ),
                 ),
                 num_child_spans=NumChildSpansDataLoader(db),
+                num_llm_spans_per_trace=NumLlmSpansPerTraceDataLoader(db),
                 num_spans_per_trace=NumSpansPerTraceDataLoader(db),
                 project_fields=TableFieldsDataLoader(db, models.Project),
                 projects_by_trace_retention_policy_id=ProjectIdsByTraceRetentionPolicyIdDataLoader(

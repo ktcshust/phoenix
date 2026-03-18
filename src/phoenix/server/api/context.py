@@ -42,6 +42,7 @@ from phoenix.server.api.dataloaders import (
     LatestPromptVersionIdDataLoader,
     MinStartOrMaxEndTimeDataLoader,
     NumChildSpansDataLoader,
+    NumLlmSpansPerTraceDataLoader,
     NumSpansPerTraceDataLoader,
     ProjectByNameDataLoader,
     ProjectIdsByTraceRetentionPolicyIdDataLoader,
@@ -151,6 +152,7 @@ class DataLoaders:
     min_start_or_max_end_times: MinStartOrMaxEndTimeDataLoader
     llm_evaluator_fields: TableFieldsDataLoader
     num_child_spans: NumChildSpansDataLoader
+    num_llm_spans_per_trace: NumLlmSpansPerTraceDataLoader
     num_spans_per_trace: NumSpansPerTraceDataLoader
     project_by_name: ProjectByNameDataLoader
     project_fields: TableFieldsDataLoader

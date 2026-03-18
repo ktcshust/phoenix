@@ -246,6 +246,7 @@ export function TracesTable(props: TracesTableProps) {
                   id
                   traceId
                   numSpans
+                  numLlmSpans
                   costSummary {
                     total {
                       cost
@@ -647,6 +648,22 @@ export function TracesTable(props: TracesTableProps) {
             return null;
           }
           return <LatencyText latencyMs={value} />;
+        },
+      },
+      {
+        header: "LLM calls",
+        minSize: 80,
+        accessorKey: "trace.numLlmSpans",
+        id: "numLlmSpans",
+        cell: ({ row, getValue }) => {
+          if (row.original.__additionalRow) {
+            return null;
+          }
+          const value = getValue();
+          if (value === null || value === undefined) {
+            return "--";
+          }
+          return <>{value as number}</>;
         },
       },
       {

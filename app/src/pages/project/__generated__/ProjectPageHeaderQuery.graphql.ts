@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cc10d9c125b33bb0ac6c299655146869>>
+ * @generated SignedSource<<e3e605a1c882da307043dd476e285740>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -135,6 +135,13 @@ return {
                 "storageKey": null
               },
               {
+                "alias": "timeRangeMessageCount",
+                "args": (v4/*: any*/),
+                "kind": "ScalarField",
+                "name": "messageCount",
+                "storageKey": null
+              },
+              {
                 "alias": null,
                 "args": (v4/*: any*/),
                 "concreteType": "SpanCostSummary",
@@ -227,16 +234,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7e327e9f3040f641fb0b90a33759c5dc",
+    "cacheID": "321e7d674973ef0041fe9acb8e6a2806",
     "id": null,
     "metadata": {},
     "name": "ProjectPageHeaderQuery",
     "operationKind": "query",
-    "text": "query ProjectPageHeaderQuery(\n  $timeRange: TimeRange\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProjectPageHeader_stats\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n"
+    "text": "query ProjectPageHeaderQuery(\n  $timeRange: TimeRange\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProjectPageHeader_stats\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  timeRangeMessageCount: messageCount(timeRange: $timeRange)\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "042b76a71b57987b50febe61073a6b21";
+(node as any).hash = "ba355ccb3a0cca3856745f14e557a7eb";
 
 export default node;

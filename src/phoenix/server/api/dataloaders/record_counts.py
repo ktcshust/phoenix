@@ -14,7 +14,7 @@ from phoenix.server.session_filters import get_filtered_session_rowids_subquery
 from phoenix.server.types import DbSessionFactory
 from phoenix.trace.dsl import SpanFilter
 
-Kind: TypeAlias = Literal["span", "trace"]
+Kind: TypeAlias = Literal["span", "trace", "message"]
 ProjectRowId: TypeAlias = int
 TimeInterval: TypeAlias = tuple[Optional[datetime], Optional[datetime]]
 FilterCondition: TypeAlias = Optional[str]
@@ -123,6 +123,17 @@ def _get_stmt(
             stmt = sf(stmt)
         else:
             stmt = stmt.add_columns(func.count().label("count"))
+    elif kind == "message":
+        # Count root CHAIN spans = user messages/requests
+        # Each LangGraph/LangChain graph invocation creates a root CHAIN span
+        time_column = models.Span.start_time
+        stmt = stmt.join(models.Span)
+        stmt = stmt.where(models.Span.parent_id.is_(None))
+        stmt = stmt.where(func.upper(models.Span.span_kind) == "CHAIN")
+        if filter_condition:
+            sf = SpanFilter(filter_condition)
+            stmt = sf(stmt)
+        stmt = stmt.add_columns(func.count().label("count"))
     else:
         assert_never(kind)
     stmt = stmt.where(pid.in_(project_rowids))

@@ -2290,6 +2290,11 @@ type Project implements Node {
   endTime: DateTime
   recordCount(timeRange: TimeRange, filterCondition: String, sessionFilterCondition: String): Int!
   traceCount(timeRange: TimeRange, filterCondition: String, sessionFilterCondition: String): Int!
+
+  """
+  Count of root CHAIN spans (user messages/requests processed). Each LangGraph/LangChain graph invocation creates one root CHAIN span.
+  """
+  messageCount(timeRange: TimeRange, filterCondition: String, sessionFilterCondition: String): Int!
   tokenCountTotal(timeRange: TimeRange, filterCondition: String): Float!
   tokenCountPrompt(timeRange: TimeRange, filterCondition: String): Float!
   tokenCountCompletion(timeRange: TimeRange, filterCondition: String): Float!
@@ -3372,6 +3377,7 @@ type Trace implements Node {
   session: ProjectSession
   rootSpan: Span
   numSpans: Int!
+  numLlmSpans: Int!
   spans(first: Int = 50, last: Int, after: String, before: String, rootSpansOnly: Boolean, orphanSpanAsRootSpan: Boolean = true): SpanConnection!
 
   """Annotations associated with the trace."""

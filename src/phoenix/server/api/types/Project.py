@@ -188,6 +188,32 @@ class Project(Node):
             ),
         )
 
+    @strawberry.field(
+        description="Count of root CHAIN spans (user messages/requests processed). "
+        "Each LangGraph/LangChain graph invocation creates one root CHAIN span."
+    )
+    async def message_count(
+        self,
+        info: Info[Context, None],
+        time_range: Optional[TimeRange] = UNSET,
+        filter_condition: Optional[str] = UNSET,
+        session_filter_condition: Optional[str] = UNSET,
+    ) -> int:
+        if filter_condition and session_filter_condition:
+            raise BadRequest(
+                "Both a filter condition and session filter condition "
+                "cannot be applied at the same time"
+            )
+        return await info.context.data_loaders.record_counts.load(
+            (
+                "message",
+                self.id,
+                time_range or None,
+                filter_condition or None,
+                session_filter_condition or None,
+            ),
+        )
+
     @strawberry.field
     async def token_count_total(
         self,

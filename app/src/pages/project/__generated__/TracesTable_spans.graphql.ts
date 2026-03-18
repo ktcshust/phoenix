@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5dde7221c0119a4a04bbe2f2a148fbce>>
+ * @generated SignedSource<<b56015413b928b464d637ae6e429a598>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -106,6 +106,7 @@ export type TracesTable_spans$data = {
             };
           };
           readonly id: string;
+          readonly numLlmSpans: number;
           readonly numSpans: number;
           readonly traceId: string;
         };
@@ -468,6 +469,13 @@ return {
                     {
                       "alias": null,
                       "args": null,
+                      "kind": "ScalarField",
+                      "name": "numLlmSpans",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
                       "concreteType": "SpanCostSummary",
                       "kind": "LinkedField",
                       "name": "costSummary",
@@ -688,6 +696,6 @@ return {
 };
 })();
 
-(node as any).hash = "b2ce5da0dab3a8061fce34751c19df14";
+(node as any).hash = "438621acb1e6af4d9f3a7129514ec144";
 
 export default node;
