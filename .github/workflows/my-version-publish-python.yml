@@ -49,17 +49,7 @@ jobs:
       #   Yêu cầu: vào https://pypi.org/manage/account/publishing/
       #   thêm trusted publisher với repo ktcshust/phoenix, workflow: my-version-publish-python.yml
       # ---------------------------------------------------------------
-      - name: Publish to PyPI (Trusted Publisher)
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        # Bỏ comment block bên dưới để dùng API token thay thế (Cách 2):
-        # with:
-        #   password: ${{ secrets.PYPI_API_TOKEN }}
-
-      # ---------------------------------------------------------------
-      # CÁCH 2: API Token - thêm secret PYPI_API_TOKEN vào repo settings
-      # Bỏ comment block trên và bỏ comment block dưới đây:
-      # ---------------------------------------------------------------
-      # - name: Publish to PyPI (API Token)
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
