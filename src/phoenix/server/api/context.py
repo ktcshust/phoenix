@@ -44,6 +44,7 @@ from phoenix.server.api.dataloaders import (
     NumChildSpansDataLoader,
     NumLlmSpansPerTraceDataLoader,
     NumSpansPerTraceDataLoader,
+    PeakLlmRequestsPerMinuteDataLoader,
     ProjectByNameDataLoader,
     ProjectIdsByTraceRetentionPolicyIdDataLoader,
     PromptVersionSequenceNumberDataLoader,
@@ -154,6 +155,7 @@ class DataLoaders:
     num_child_spans: NumChildSpansDataLoader
     num_llm_spans_per_trace: NumLlmSpansPerTraceDataLoader
     num_spans_per_trace: NumSpansPerTraceDataLoader
+    peak_llm_requests_per_minute: PeakLlmRequestsPerMinuteDataLoader
     project_by_name: ProjectByNameDataLoader
     project_fields: TableFieldsDataLoader
     project_trace_retention_policy_fields: TableFieldsDataLoader

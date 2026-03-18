@@ -44,6 +44,12 @@ export function ProjectPageHeader(props: {
         timeRangeTraceCount: traceCount(timeRange: $timeRange)
         timeRangeMessageCount: messageCount(timeRange: $timeRange)
         timeRangeLlmRequestCount: llmRequestCount(timeRange: $timeRange)
+        messagesToday
+        llmRequestsCurrentMinute
+        llmRequestsPeakMinute {
+          count
+          minute
+        }
         costSummary(timeRange: $timeRange) {
           total {
             cost
@@ -152,6 +158,35 @@ export function ProjectPageHeader(props: {
               <Text size="L" fontFamily="mono">
                 {intFormatter(data?.timeRangeLlmRequestCount)}
               </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text elementType="h3" size="S" color="text-700">
+                Messages Today
+              </Text>
+              <Text size="L" fontFamily="mono">
+                {intFormatter(data?.messagesToday)}
+              </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text elementType="h3" size="S" color="text-700">
+                LLM/min (now)
+              </Text>
+              <Text size="L" fontFamily="mono">
+                {intFormatter(data?.llmRequestsCurrentMinute)}
+              </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text elementType="h3" size="S" color="text-700">
+                Peak LLM/min
+              </Text>
+              <Text size="L" fontFamily="mono">
+                {data?.llmRequestsPeakMinute?.count ?? 0}
+              </Text>
+              {data?.llmRequestsPeakMinute?.minute != null && (
+                <Text size="XS" color="text-500">
+                  @ {data.llmRequestsPeakMinute.minute}
+                </Text>
+              )}
             </Flex>
             <Flex direction="column" flex="none">
               <Text elementType="h3" size="S" color="text-700">

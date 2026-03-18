@@ -48,6 +48,7 @@ from .min_start_or_max_end_times import MinStartOrMaxEndTimeCache, MinStartOrMax
 from .num_child_spans import NumChildSpansDataLoader
 from .num_llm_spans_per_trace import NumLlmSpansPerTraceDataLoader
 from .num_spans_per_trace import NumSpansPerTraceDataLoader
+from .peak_llm_requests_per_minute import PeakLlmRequestsPerMinuteDataLoader
 from .project_by_name import ProjectByNameDataLoader
 from .project_ids_by_trace_retention_policy_id import ProjectIdsByTraceRetentionPolicyIdDataLoader
 from .prompt_version_sequence_number import PromptVersionSequenceNumberDataLoader

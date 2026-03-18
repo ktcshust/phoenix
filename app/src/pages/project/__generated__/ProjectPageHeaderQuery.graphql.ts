@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d05c02f79f66bf7e6ae12fd716bfdd71>>
+ * @generated SignedSource<<be490e36e37927547955be4eeabb7f4b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -150,6 +150,45 @@ return {
               },
               {
                 "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "messagesToday",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "llmRequestsCurrentMinute",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "PeakLlmRequestsInfo",
+                "kind": "LinkedField",
+                "name": "llmRequestsPeakMinute",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "count",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "minute",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
                 "args": (v4/*: any*/),
                 "concreteType": "SpanCostSummary",
                 "kind": "LinkedField",
@@ -241,16 +280,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "53e248198e3c9b3b5fb2f44ca35b51c3",
+    "cacheID": "8c75d90ebc3a90d880772f34a9bcf0b6",
     "id": null,
     "metadata": {},
     "name": "ProjectPageHeaderQuery",
     "operationKind": "query",
-    "text": "query ProjectPageHeaderQuery(\n  $timeRange: TimeRange\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProjectPageHeader_stats\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  timeRangeMessageCount: messageCount(timeRange: $timeRange)\n  timeRangeLlmRequestCount: llmRequestCount(timeRange: $timeRange)\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n"
+    "text": "query ProjectPageHeaderQuery(\n  $timeRange: TimeRange\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProjectPageHeader_stats\n    id\n  }\n}\n\nfragment ProjectPageHeader_stats on Project {\n  timeRangeTraceCount: traceCount(timeRange: $timeRange)\n  timeRangeMessageCount: messageCount(timeRange: $timeRange)\n  timeRangeLlmRequestCount: llmRequestCount(timeRange: $timeRange)\n  messagesToday\n  llmRequestsCurrentMinute\n  llmRequestsPeakMinute {\n    count\n    minute\n  }\n  costSummary(timeRange: $timeRange) {\n    total {\n      cost\n    }\n    prompt {\n      cost\n    }\n    completion {\n      cost\n    }\n  }\n  latencyMsP50: latencyMsQuantile(probability: 0.5, timeRange: $timeRange)\n  latencyMsP99: latencyMsQuantile(probability: 0.99, timeRange: $timeRange)\n  spanAnnotationNames\n  documentEvaluationNames\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3b783e0983c8cf6b3bf0e49722b3fcfb";
+(node as any).hash = "fbee6180397a4f3dab0701dda7c87243";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<471ad2312f0c5e6410c8f3e7d0c07070>>
+ * @generated SignedSource<<edda7345a1bdc6626f704781a42ac091>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,12 @@ export type ProjectPageHeader_stats$data = {
   readonly id: string;
   readonly latencyMsP50: number | null;
   readonly latencyMsP99: number | null;
+  readonly llmRequestsCurrentMinute: number;
+  readonly llmRequestsPeakMinute: {
+    readonly count: number;
+    readonly minute: string | null;
+  };
+  readonly messagesToday: number;
   readonly spanAnnotationNames: ReadonlyArray<string>;
   readonly timeRangeLlmRequestCount: number;
   readonly timeRangeMessageCount: number;
@@ -99,6 +105,45 @@ return {
       "args": (v1/*: any*/),
       "kind": "ScalarField",
       "name": "llmRequestCount",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "messagesToday",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "llmRequestsCurrentMinute",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "PeakLlmRequestsInfo",
+      "kind": "LinkedField",
+      "name": "llmRequestsPeakMinute",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "count",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "minute",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -197,6 +242,6 @@ return {
 };
 })();
 
-(node as any).hash = "3b783e0983c8cf6b3bf0e49722b3fcfb";
+(node as any).hash = "fbee6180397a4f3dab0701dda7c87243";
 
 export default node;

@@ -1,5 +1,5 @@
 import operator
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Annotated, Any, Literal, Optional, cast
 
 import strawberry
@@ -45,6 +45,7 @@ from phoenix.server.api.types.SortDir import SortDir
 from phoenix.server.api.types.Span import Span
 from phoenix.server.api.types.SpanCostSummary import SpanCostSummary
 from phoenix.server.api.types.TimeSeries import TimeSeries, TimeSeriesDataPoint
+from phoenix.server.api.types.PeakLlmRequestsInfo import PeakLlmRequestsInfo
 from phoenix.server.api.types.Trace import Trace
 from phoenix.server.api.types.ValidationResult import ValidationResult
 from phoenix.server.session_filters import get_filtered_session_rowids_subquery
@@ -238,6 +239,55 @@ class Project(Node):
                 session_filter_condition or None,
             ),
         )
+
+    @strawberry.field(
+        description="Count of messages (root CHAIN spans) in the current UTC+7 calendar day."
+    )
+    async def messages_today(
+        self,
+        info: Info[Context, None],
+    ) -> int:
+        tz_hcm = timezone(timedelta(hours=7))
+        now_hcm = datetime.now(tz_hcm)
+        start = now_hcm.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=1)
+        time_range = TimeRange(
+            start=start.astimezone(timezone.utc),
+            end=end.astimezone(timezone.utc),
+        )
+        return await info.context.data_loaders.record_counts.load(
+            ("message", self.id, time_range, None, None),
+        )
+
+    @strawberry.field(
+        description="Count of LLM API calls in the current UTC+7 clock minute."
+    )
+    async def llm_requests_current_minute(
+        self,
+        info: Info[Context, None],
+    ) -> int:
+        tz_hcm = timezone(timedelta(hours=7))
+        now_hcm = datetime.now(tz_hcm)
+        start = now_hcm.replace(second=0, microsecond=0)
+        end = start + timedelta(minutes=1)
+        time_range = TimeRange(
+            start=start.astimezone(timezone.utc),
+            end=end.astimezone(timezone.utc),
+        )
+        return await info.context.data_loaders.record_counts.load(
+            ("llm_request", self.id, time_range, None, None),
+        )
+
+    @strawberry.field(
+        description="Peak LLM requests in any 1-minute window across all recorded data, "
+        "with the UTC+7 timestamp of that minute."
+    )
+    async def llm_requests_peak_minute(
+        self,
+        info: Info[Context, None],
+    ) -> PeakLlmRequestsInfo:
+        result = await info.context.data_loaders.peak_llm_requests_per_minute.load(self.id)
+        return PeakLlmRequestsInfo(count=result.count, minute=result.minute)
 
     @strawberry.field
     async def token_count_total(
