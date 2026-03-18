@@ -1,0 +1,65 @@
+name: "[my-version] Build & Publish Python Package to PyPI"
+
+on:
+  push:
+    branches:
+      - my-version
+
+jobs:
+  build-and-publish:
+    name: Build and publish Python package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Cần nếu dùng Trusted Publisher (OIDC) thay vì API token
+      id-token: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      # Build frontend vào wheel (bắt buộc vì package nhúng static files)
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: app/package.json
+
+      - name: Install frontend dependencies & build
+        working-directory: ./app
+        run: pnpm install --frozen-lockfile && pnpm run build
+
+      # Setup Python toolchain
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.10"
+
+      # Tự động bump version thành dev build để tránh conflict với PyPI chính thức
+      # Format: <base_version>.dev<run_number>  ví dụ: 13.15.0.dev42
+      - name: Bump to dev version
+        run: |
+          BASE_VERSION=$(python -c "exec(open('src/phoenix/version.py').read()); print(__version__)")
+          DEV_VERSION="${BASE_VERSION}.dev${{ github.run_number }}"
+          echo "__version__ = \"${DEV_VERSION}\"" > src/phoenix/version.py
+          echo "Publishing version: ${DEV_VERSION}"
+
+      - name: Build distribution (wheel + sdist)
+        run: rm -rf dist && uv build
+
+      # ---------------------------------------------------------------
+      # CÁCH 1 (Khuyên dùng): Trusted Publisher / OIDC - không cần lưu token
+      #   Yêu cầu: vào https://pypi.org/manage/account/publishing/
+      #   thêm trusted publisher với repo ktcshust/phoenix, workflow: my-version-publish-python.yml
+      # ---------------------------------------------------------------
+      - name: Publish to PyPI (Trusted Publisher)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Bỏ comment block bên dưới để dùng API token thay thế (Cách 2):
+        # with:
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
+
+      # ---------------------------------------------------------------
+      # CÁCH 2: API Token - thêm secret PYPI_API_TOKEN vào repo settings
+      # Bỏ comment block trên và bỏ comment block dưới đây:
+      # ---------------------------------------------------------------
+      # - name: Publish to PyPI (API Token)
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
