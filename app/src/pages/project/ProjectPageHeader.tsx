@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import type { ReactNode } from "react";
-import { startTransition, useEffect } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { Focusable } from "react-aria";
 import { graphql, useRefetchableFragment } from "react-relay";
 
@@ -76,6 +76,48 @@ export function ProjectPageHeader(props: {
       refetch({}, { fetchPolicy: "store-and-network" });
     });
   }, [fetchKey, refetch]);
+
+  // Refetch at every minute boundary so llmRequestsCurrentMinute resets to 0
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+    const now = new Date();
+    const msUntilNextMinute =
+      (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    const timeoutId = setTimeout(() => {
+      startTransition(() => {
+        refetch({}, { fetchPolicy: "store-and-network" });
+      });
+      intervalId = setInterval(() => {
+        startTransition(() => {
+          refetch({}, { fetchPolicy: "store-and-network" });
+        });
+      }, 60_000);
+    }, msUntilNextMinute);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [refetch]);
+
+  // Live UTC+7 clock
+  const [clockNow, setClockNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setClockNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const clockDateStr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(clockNow);
+  const clockTimeStr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(clockNow);
 
   const latencyMsP50 = data?.latencyMsP50;
   const latencyMsP99 = data?.latencyMsP99;
@@ -257,7 +299,17 @@ export function ProjectPageHeader(props: {
           </Flex>
         </div>
         <View flex="none" paddingStart="size-100">
-          {extra}
+          <Flex direction="row" gap="size-200" alignItems="center">
+            <Flex direction="column" alignItems="end" flex="none">
+              <Text size="XS" color="text-500">
+                {clockDateStr}
+              </Text>
+              <Text size="S" fontFamily="mono">
+                {clockTimeStr}
+              </Text>
+            </Flex>
+            {extra}
+          </Flex>
         </View>
       </Flex>
     </View>
