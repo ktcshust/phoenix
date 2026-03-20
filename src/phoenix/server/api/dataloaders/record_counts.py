@@ -129,7 +129,7 @@ def _get_stmt(
         time_column = models.Span.start_time
         stmt = stmt.join(models.Span)
         stmt = stmt.where(models.Span.parent_id.is_(None))
-        stmt = stmt.where(func.upper(models.Span.span_kind) == "CHAIN")
+        stmt = stmt.where(func.upper(models.Span.span_kind) == "AGENT")
         if filter_condition:
             sf = SpanFilter(filter_condition)
             stmt = sf(stmt)
