@@ -231,6 +231,7 @@ export function TracesTable(props: TracesTableProps) {
                 spanKind
                 name
                 metadata
+                attributes
                 statusCode
                 startTime
                 endTime
@@ -284,6 +285,8 @@ export function TracesTable(props: TracesTableProps) {
                       id
                       spanKind
                       name
+                      metadata
+                      attributes
                       statusCode: propagatedStatusCode
                       startTime
                       endTime
@@ -634,7 +637,7 @@ export function TracesTable(props: TracesTableProps) {
         cell: ({ row }) => (
           <AgentResponseCell
             spanKind={row.original.spanKind}
-            metadata={row.original.metadata}
+            metadata={row.original.metadata ?? (row.original as any).attributes}
             isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
           />
         ),
