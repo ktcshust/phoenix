@@ -521,8 +521,8 @@ export function TracesTable(props: TracesTableProps) {
         header: "status",
         accessorKey: "statusCode",
         enableSorting: false,
-        minSize: 50,
-        maxSize: 75,
+        minSize: 36,
+        maxSize: 50,
         cell: ({ getValue, row }) => {
           if (row.original.__additionalRow) {
             return null;
@@ -546,7 +546,7 @@ export function TracesTable(props: TracesTableProps) {
         },
         enableSorting: false,
         accessorKey: "spanKind",
-        maxSize: 100,
+        maxSize: 125,
         cell: (props) => {
           if (props.row.original.__additionalRow) {
             return (
@@ -556,7 +556,7 @@ export function TracesTable(props: TracesTableProps) {
                   // we can use the row.depth property
                   // and paddingLeft to visually indicate the depth
                   // of the row
-                  padding-left: ${props.row.depth * 2}rem;
+                  padding-left: ${props.row.depth * 1.25}rem;
                 `}
               >
                 <Icon svg={<Icons.MoreHorizontalOutline />} />
@@ -571,7 +571,7 @@ export function TracesTable(props: TracesTableProps) {
                 // we can use the row.depth property
                 // and paddingLeft to visually indicate the depth
                 // of the row
-                padding-left: ${props.row.depth * 2}rem;
+                padding-left: ${props.row.depth * 1.25}rem;
               `}
             >
               <Flex gap="size-50">

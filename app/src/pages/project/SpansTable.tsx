@@ -407,8 +407,8 @@ export function SpansTable(props: SpansTableProps) {
       header: "status",
       accessorKey: "statusCode",
       enableSorting: false,
-      minSize: 50,
-      maxSize: 75,
+      minSize: 36,
+      maxSize: 50,
       cell: ({ getValue }) => {
         const statusCode = getValue() as SpanStatusCode;
         return <SpanStatusCodeIcon statusCode={statusCode} />;
@@ -417,7 +417,7 @@ export function SpansTable(props: SpansTableProps) {
     {
       header: "kind",
       accessorKey: "spanKind",
-      maxSize: 100,
+      maxSize: 125,
       enableSorting: false,
       cell: ({ getValue }) => {
         return <SpanKindToken spanKind={getValue() as string} />;
@@ -729,9 +729,8 @@ export function SpansTable(props: SpansTableProps) {
                           {...{
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${
-                              header.column.getIsResizing() ? "isResizing" : ""
-                            }`,
+                            className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""
+                              }`,
                           }}
                         />
                       </>
