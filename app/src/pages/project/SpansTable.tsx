@@ -51,6 +51,8 @@ import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
 
+import { AgentResponseCell } from "./AgentResponseCell";
+
 import type {
   SpansTable_spans$key,
   SpanStatusCode,
@@ -456,6 +458,17 @@ export function SpansTable(props: SpansTableProps) {
       enableSorting: false,
     },
     ...annotationColumns, // TODO: consider hiding this column if there are no evals. For now we want people to know that there are evals
+    {
+      header: "agent response",
+      id: "agentResponse",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <AgentResponseCell
+          spanKind={row.original.spanKind}
+          metadata={row.original.metadata}
+        />
+      ),
+    },
     {
       header: "start time",
       accessorKey: "startTime",

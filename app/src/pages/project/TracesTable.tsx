@@ -60,6 +60,8 @@ import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
 
+import { AgentResponseCell } from "./AgentResponseCell";
+
 import type {
   SpanStatusCode,
   TracesTable_spans$data,
@@ -93,7 +95,7 @@ interface IAdditionalSpansIndicator {
 /**
  * An indicator that this row is an additional row, not a span
  */
-interface IAdditionalSpansRow extends ISpanItem, IAdditionalSpansIndicator {}
+interface IAdditionalSpansRow extends ISpanItem, IAdditionalSpansIndicator { }
 
 /**
  * A nested table row is a span with a children that recursively
@@ -105,7 +107,7 @@ type NestedSpanTableRow<TSpan extends IAdditionalSpansRow> = TSpan & {
 
 const TableBody = <
   T extends TracesTable_spans$data["rootSpans"]["edges"][number]["rootSpan"] &
-    IAdditionalSpansRow,
+  IAdditionalSpansRow,
 >({
   table,
 }: {
@@ -626,6 +628,18 @@ export function TracesTable(props: TracesTableProps) {
       },
       ...annotationColumns, // TODO: consider hiding this column is there is no evals. For now show it
       {
+        header: "agent response",
+        id: "agentResponse",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <AgentResponseCell
+            spanKind={row.original.spanKind}
+            metadata={row.original.metadata}
+            isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
+          />
+        ),
+      },
+      {
         header: "start time",
         accessorKey: "startTime",
         cell: (props) => {
@@ -911,9 +925,8 @@ export function TracesTable(props: TracesTableProps) {
                           {...{
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${
-                              header.column.getIsResizing() ? "isResizing" : ""
-                            }`,
+                            className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""
+                              }`,
                           }}
                         />
                       </>
