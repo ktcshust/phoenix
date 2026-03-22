@@ -28,6 +28,7 @@ export const AgentResponseCell = ({
 
     let hasClarification = false;
     let hasAnswerStatus = false;
+    let answerStatusValue: string | undefined = undefined;
     let reflectionScore: number | undefined = undefined;
 
     try {
@@ -55,6 +56,11 @@ export const AgentResponseCell = ({
             "clarification" in parsedMetadata;
         hasAnswerStatus = "ebot.answer_status" in parsedMetadata || "answer_status" in parsedMetadata;
 
+        const rawStatus = parsedMetadata["ebot.answer_status"] ?? parsedMetadata["answer_status"];
+        if (rawStatus !== undefined && rawStatus !== null) {
+            answerStatusValue = String(rawStatus).toUpperCase();
+        }
+
         const score = parsedMetadata["ebot.reflection_score"] ?? parsedMetadata["reflection_score"];
         if (score !== undefined && score !== null && !Number.isNaN(Number(score))) {
             reflectionScore = Number(score);
@@ -67,23 +73,27 @@ export const AgentResponseCell = ({
     let color: "danger" | "warning" | "success" = "danger";
 
     if (!hasClarification && !hasAnswerStatus) {
-        statusText = "ERROR";
+        statusText = "FAILED";
         color = "danger";
     } else if (hasClarification) {
         statusText = "CLARIFICATION";
         color = "warning";
     } else if (hasAnswerStatus) {
-        if (reflectionScore !== undefined) {
-            if (reflectionScore < 75) {
+        if (answerStatusValue === "TIMEOUT") {
+            statusText = "TIMEOUT";
+            color = "warning";
+        } else if (answerStatusValue === "FAILED") {
+            statusText = "FAILED";
+            color = "danger";
+        } else {
+            // FULFILLED or other values → check reflection score
+            if (reflectionScore !== undefined && reflectionScore < 75) {
                 statusText = "NOT FOUND";
                 color = "danger";
             } else {
                 statusText = "SUCCESS";
                 color = "success";
             }
-        } else {
-            statusText = "SUCCESS";
-            color = "success";
         }
     }
 
