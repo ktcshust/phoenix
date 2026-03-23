@@ -17,13 +17,16 @@ type ParsedAgentResponse = {
   hasAnswerStatus: boolean;
   answerStatusValue: string | undefined;
   reflectionScore: number | undefined;
+  actionValue: string | undefined;
 };
 
-function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
+export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
   let hasClarification = false;
   let hasAnswerStatus = false;
   let answerStatusValue: string | undefined = undefined;
   let reflectionScore: number | undefined = undefined;
+  // eslint-disable-next-line prefer-const -- reassigned inside try block
+  let actionValue: string | undefined = undefined;
 
   try {
     let parsedMetadata: Record<string, string | boolean | number> = {};
@@ -61,6 +64,11 @@ function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     if (score !== undefined && score !== null && !Number.isNaN(Number(score))) {
       reflectionScore = Number(score);
     }
+
+    const rawAction = parsedMetadata["ebot.action"] ?? parsedMetadata["action"];
+    if (rawAction !== undefined && rawAction !== null) {
+      actionValue = String(rawAction).toLowerCase();
+    }
   } catch (_e) {
     // Ignore parse errors
   }
@@ -70,10 +78,11 @@ function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     hasAnswerStatus,
     answerStatusValue,
     reflectionScore,
+    actionValue,
   };
 }
 
-function resolveStatus(parsed: ParsedAgentResponse): {
+export function resolveStatus(parsed: ParsedAgentResponse): {
   statusText: string;
   color: "danger" | "warning" | "success";
 } {
@@ -82,7 +91,12 @@ function resolveStatus(parsed: ParsedAgentResponse): {
     hasAnswerStatus,
     answerStatusValue,
     reflectionScore,
+    actionValue,
   } = parsed;
+
+  if (actionValue === "direct_answer") {
+    return { statusText: "DIRECT ANSWER", color: "success" };
+  }
 
   if (!hasClarification && !hasAnswerStatus) {
     return { statusText: "FAILED", color: "danger" };

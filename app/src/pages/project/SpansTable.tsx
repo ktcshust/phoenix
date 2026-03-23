@@ -51,13 +51,12 @@ import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
 
-import { AgentResponseCell } from "./AgentResponseCell";
-
 import type {
   SpansTable_spans$key,
   SpanStatusCode,
 } from "./__generated__/SpansTable_spans.graphql";
 import type { SpansTableSpansQuery } from "./__generated__/SpansTableSpansQuery.graphql";
+import { AgentResponseCell, parseAgentMetadata } from "./AgentResponseCell";
 import { DEFAULT_PAGE_SIZE } from "./constants";
 import { ProjectFilterConfigButton } from "./ProjectFilterConfigButton";
 import { ProjectTableEmpty } from "./ProjectTableEmpty";
@@ -470,6 +469,36 @@ export function SpansTable(props: SpansTableProps) {
       ),
     },
     {
+      header: "ebot.action",
+      id: "ebotAction",
+      enableSorting: false,
+      cell: ({ row }) => {
+        if (String(row.original.spanKind).toLowerCase() !== "agent") {
+          return <Text color="text-400">--</Text>;
+        }
+        const parsed = parseAgentMetadata(row.original.metadata);
+        return <Text>{parsed.actionValue ?? "--"}</Text>;
+      },
+    },
+    {
+      header: "ebot.reflection_score",
+      id: "ebotReflectionScore",
+      enableSorting: false,
+      cell: ({ row }) => {
+        if (String(row.original.spanKind).toLowerCase() !== "agent") {
+          return <Text color="text-400">--</Text>;
+        }
+        const parsed = parseAgentMetadata(row.original.metadata);
+        return (
+          <Text>
+            {parsed.reflectionScore !== undefined
+              ? parsed.reflectionScore
+              : "--"}
+          </Text>
+        );
+      },
+    },
+    {
       header: "start time",
       accessorKey: "startTime",
       cell: TimestampCell,
@@ -742,8 +771,9 @@ export function SpansTable(props: SpansTableProps) {
                           {...{
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""
-                              }`,
+                            className: `resizer ${
+                              header.column.getIsResizing() ? "isResizing" : ""
+                            }`,
                           }}
                         />
                       </>

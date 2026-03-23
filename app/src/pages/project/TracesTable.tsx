@@ -66,7 +66,11 @@ import type {
   TracesTable_spans$key,
 } from "./__generated__/TracesTable_spans.graphql";
 import type { TracesTableQuery } from "./__generated__/TracesTableQuery.graphql";
-import { AgentResponseCell } from "./AgentResponseCell";
+import {
+  AgentResponseCell,
+  parseAgentMetadata,
+  resolveStatus,
+} from "./AgentResponseCell";
 import { DEFAULT_PAGE_SIZE } from "./constants";
 import { ProjectTableEmpty } from "./ProjectTableEmpty";
 import { RetrievalEvaluationLabel } from "./RetrievalEvaluationLabel";
@@ -375,6 +379,33 @@ export function TracesTable(props: TracesTableProps) {
       return root as SpanRowType;
     });
   }, [data]);
+
+  const agentResponseCounts = useMemo(() => {
+    const counts: Record<
+      string,
+      { count: number; color: "success" | "danger" | "warning" }
+    > = {
+      SUCCESS: { count: 0, color: "success" },
+      "NOT FOUND": { count: 0, color: "danger" },
+      FAILED: { count: 0, color: "danger" },
+      CLARIFICATION: { count: 0, color: "warning" },
+      TIMEOUT: { count: 0, color: "warning" },
+      "DIRECT ANSWER": { count: 0, color: "success" },
+    };
+    for (const row of tableData) {
+      if (String(row.spanKind).toLowerCase() !== "agent") continue;
+      const metadata =
+        row.metadata ?? (row as Record<string, unknown>).attributes;
+      const parsed = parseAgentMetadata(metadata);
+      // No fallback to parent here since root spans are top-level
+      const { statusText } = resolveStatus(parsed);
+      if (statusText in counts) {
+        counts[statusText].count++;
+      }
+    }
+    return counts;
+  }, [tableData]);
+
   type TableRow = (typeof tableData)[number];
 
   const dynamicAnnotationColumns: ColumnDef<TableRow>[] = useMemo(
@@ -652,6 +683,64 @@ export function TracesTable(props: TracesTableProps) {
         },
       },
       {
+        header: "ebot.action",
+        id: "ebotAction",
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (row.original.__additionalRow) return null;
+          if (String(row.original.spanKind).toLowerCase() !== "agent") {
+            return <Text color="text-400">--</Text>;
+          }
+          const metadata =
+            row.original.metadata ?? (row.original as any).attributes;
+          const parentRow = row.getParentRow();
+          let parsed = parseAgentMetadata(metadata);
+          if (
+            !parsed.hasClarification &&
+            !parsed.hasAnswerStatus &&
+            parentRow
+          ) {
+            parsed = parseAgentMetadata(
+              parentRow.original.metadata ??
+                (parentRow.original as any).attributes
+            );
+          }
+          return <Text>{parsed.actionValue ?? "--"}</Text>;
+        },
+      },
+      {
+        header: "ebot.reflection_score",
+        id: "ebotReflectionScore",
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (row.original.__additionalRow) return null;
+          if (String(row.original.spanKind).toLowerCase() !== "agent") {
+            return <Text color="text-400">--</Text>;
+          }
+          const metadata =
+            row.original.metadata ?? (row.original as any).attributes;
+          const parentRow = row.getParentRow();
+          let parsed = parseAgentMetadata(metadata);
+          if (
+            !parsed.hasClarification &&
+            !parsed.hasAnswerStatus &&
+            parentRow
+          ) {
+            parsed = parseAgentMetadata(
+              parentRow.original.metadata ??
+                (parentRow.original as any).attributes
+            );
+          }
+          return (
+            <Text>
+              {parsed.reflectionScore !== undefined
+                ? parsed.reflectionScore
+                : "--"}
+            </Text>
+          );
+        },
+      },
+      {
         header: "start time",
         accessorKey: "startTime",
         cell: (props) => {
@@ -860,6 +949,30 @@ export function TracesTable(props: TracesTableProps) {
 
   return (
     <div css={spansTableCSS}>
+      <View
+        paddingTop="size-50"
+        paddingBottom="size-50"
+        paddingStart="size-200"
+        paddingEnd="size-200"
+        borderBottomColor="gray-300"
+        borderBottomWidth="thin"
+        flex="none"
+      >
+        <Flex direction="row" gap="size-300" alignItems="center" wrap="wrap">
+          {Object.entries(agentResponseCounts).map(
+            ([status, { count, color }]) => (
+              <Flex key={status} direction="column" flex="none">
+                <Text size="XS" color="text-700">
+                  {status}
+                </Text>
+                <Text size="M" fontFamily="mono" color={color}>
+                  {count}
+                </Text>
+              </Flex>
+            )
+          )}
+        </Flex>
+      </View>
       <View
         paddingTop="size-100"
         paddingBottom="size-100"
