@@ -391,6 +391,7 @@ export function TracesTable(props: TracesTableProps) {
       CLARIFICATION: { count: 0, color: "warning" },
       TIMEOUT: { count: 0, color: "warning" },
       "DIRECT ANSWER": { count: 0, color: "success" },
+      HYBRID: { count: 0, color: "warning" },
     };
     for (const row of tableData) {
       if (String(row.spanKind).toLowerCase() !== "agent") continue;
@@ -678,6 +679,7 @@ export function TracesTable(props: TracesTableProps) {
       {
         header: "agent response",
         id: "agentResponse",
+        maxSize: 120,
         enableSorting: false,
         cell: ({ row }) => {
           const parentRow = row.getParentRow();
@@ -698,8 +700,9 @@ export function TracesTable(props: TracesTableProps) {
         },
       },
       {
-        header: "ebot.action",
+        header: "action",
         id: "ebotAction",
+        maxSize: 120,
         enableSorting: false,
         cell: ({ row }) => {
           if (row.original.__additionalRow) return null;
@@ -724,7 +727,7 @@ export function TracesTable(props: TracesTableProps) {
         },
       },
       {
-        header: "ebot.reflection_score",
+        header: "reflection_score",
         id: "ebotReflectionScore",
         enableSorting: false,
         cell: ({ row }) => {
@@ -749,7 +752,7 @@ export function TracesTable(props: TracesTableProps) {
           return (
             <Text>
               {parsed.reflectionScore !== undefined
-                ? parsed.reflectionScore
+                ? parsed.reflectionScore.join(", ")
                 : "--"}
             </Text>
           );
@@ -758,6 +761,7 @@ export function TracesTable(props: TracesTableProps) {
       {
         header: "intent_count",
         id: "ebotIntentCount",
+        maxSize: 100,
         enableSorting: false,
         cell: ({ row }) => {
           if (row.original.__additionalRow) return null;

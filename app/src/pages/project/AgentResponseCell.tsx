@@ -16,7 +16,7 @@ type ParsedAgentResponse = {
   hasClarification: boolean;
   hasAnswerStatus: boolean;
   answerStatusValue: string | undefined;
-  reflectionScore: number | undefined;
+  reflectionScore: number[] | undefined;
   actionValue: string | undefined;
   intentCount: number | undefined;
 };
@@ -25,7 +25,7 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
   let hasClarification = false;
   let hasAnswerStatus = false;
   let answerStatusValue: string | undefined = undefined;
-  let reflectionScore: number | undefined = undefined;
+  let reflectionScore: number[] | undefined = undefined;
   // eslint-disable-next-line prefer-const -- reassigned inside try block
   let actionValue: string | undefined = undefined;
   // eslint-disable-next-line prefer-const -- reassigned inside try block
@@ -61,11 +61,33 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
       answerStatusValue = String(rawStatus).toUpperCase();
     }
 
-    const score =
-      parsedMetadata["ebot.reflection_score"] ??
-      parsedMetadata["reflection_score"];
-    if (score !== undefined && score !== null && !Number.isNaN(Number(score))) {
-      reflectionScore = Number(score);
+    // reflection_score can be a single value or an array (flattened as .0, .1, …)
+    const scorePrefix =
+      "ebot.reflection_score" in parsedMetadata
+        ? "ebot.reflection_score"
+        : "reflection_score" in parsedMetadata
+          ? "reflection_score"
+          : undefined;
+    if (scorePrefix) {
+      const directVal = parsedMetadata[scorePrefix];
+      if (!Number.isNaN(Number(directVal))) {
+        // single value → wrap in array
+        reflectionScore = [Number(directVal)];
+      }
+      // also collect indexed entries like reflection_score.0, .1, …
+      const indexed: number[] = [];
+      for (const k of Object.keys(parsedMetadata)) {
+        const match = k.match(new RegExp(`^${scorePrefix}\\.(\\d+)$`));
+        if (match) {
+          const v = parsedMetadata[k];
+          if (!Number.isNaN(Number(v))) {
+            indexed[Number(match[1])] = Number(v);
+          }
+        }
+      }
+      if (indexed.length > 0) {
+        reflectionScore = indexed.filter((v) => v !== undefined);
+      }
     }
 
     const rawAction = parsedMetadata["ebot.action"] ?? parsedMetadata["action"];
@@ -100,13 +122,8 @@ export function resolveStatus(parsed: ParsedAgentResponse): {
   statusText: string;
   color: "danger" | "warning" | "success";
 } {
-  const {
-    hasClarification,
-    hasAnswerStatus,
-    answerStatusValue,
-    reflectionScore,
-    actionValue,
-  } = parsed;
+  const { hasClarification, hasAnswerStatus, answerStatusValue, actionValue } =
+    parsed;
 
   if (actionValue === "direct_answer") {
     return { statusText: "DIRECT ANSWER", color: "success" };
@@ -121,11 +138,15 @@ export function resolveStatus(parsed: ParsedAgentResponse): {
       return { statusText: "TIMEOUT", color: "warning" };
     } else if (answerStatusValue === "FAILED") {
       return { statusText: "FAILED", color: "danger" };
+    } else if (
+      answerStatusValue === "NOT FOUND" ||
+      answerStatusValue === "NOT_FOUND"
+    ) {
+      return { statusText: "NOT FOUND", color: "danger" };
+    } else if (answerStatusValue === "HYBRID") {
+      return { statusText: "HYBRID", color: "warning" };
     } else {
-      // FULFILLED or other values → check reflection score
-      if (reflectionScore !== undefined && reflectionScore < 75) {
-        return { statusText: "NOT FOUND", color: "danger" };
-      }
+      // FULFILLED or other values → SUCCESS
       return { statusText: "SUCCESS", color: "success" };
     }
   }

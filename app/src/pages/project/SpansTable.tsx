@@ -460,6 +460,7 @@ export function SpansTable(props: SpansTableProps) {
     {
       header: "agent response",
       id: "agentResponse",
+      maxSize: 120,
       enableSorting: false,
       cell: ({ row }) => (
         <AgentResponseCell
@@ -469,8 +470,9 @@ export function SpansTable(props: SpansTableProps) {
       ),
     },
     {
-      header: "ebot.action",
+      header: "action",
       id: "ebotAction",
+      maxSize: 120,
       enableSorting: false,
       cell: ({ row }) => {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
@@ -481,7 +483,7 @@ export function SpansTable(props: SpansTableProps) {
       },
     },
     {
-      header: "ebot.reflection_score",
+      header: "reflection_score",
       id: "ebotReflectionScore",
       enableSorting: false,
       cell: ({ row }) => {
@@ -492,7 +494,7 @@ export function SpansTable(props: SpansTableProps) {
         return (
           <Text>
             {parsed.reflectionScore !== undefined
-              ? parsed.reflectionScore
+              ? parsed.reflectionScore.join(", ")
               : "--"}
           </Text>
         );
@@ -501,6 +503,7 @@ export function SpansTable(props: SpansTableProps) {
     {
       header: "intent_count",
       id: "ebotIntentCount",
+      maxSize: 100,
       enableSorting: false,
       cell: ({ row }) => {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
