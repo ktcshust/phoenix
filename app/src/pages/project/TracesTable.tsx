@@ -60,14 +60,13 @@ import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
 
-import { AgentResponseCell } from "./AgentResponseCell";
-
 import type {
   SpanStatusCode,
   TracesTable_spans$data,
   TracesTable_spans$key,
 } from "./__generated__/TracesTable_spans.graphql";
 import type { TracesTableQuery } from "./__generated__/TracesTableQuery.graphql";
+import { AgentResponseCell } from "./AgentResponseCell";
 import { DEFAULT_PAGE_SIZE } from "./constants";
 import { ProjectTableEmpty } from "./ProjectTableEmpty";
 import { RetrievalEvaluationLabel } from "./RetrievalEvaluationLabel";
@@ -95,7 +94,7 @@ interface IAdditionalSpansIndicator {
 /**
  * An indicator that this row is an additional row, not a span
  */
-interface IAdditionalSpansRow extends ISpanItem, IAdditionalSpansIndicator { }
+interface IAdditionalSpansRow extends ISpanItem, IAdditionalSpansIndicator {}
 
 /**
  * A nested table row is a span with a children that recursively
@@ -107,7 +106,7 @@ type NestedSpanTableRow<TSpan extends IAdditionalSpansRow> = TSpan & {
 
 const TableBody = <
   T extends TracesTable_spans$data["rootSpans"]["edges"][number]["rootSpan"] &
-  IAdditionalSpansRow,
+    IAdditionalSpansRow,
 >({
   table,
 }: {
@@ -634,13 +633,23 @@ export function TracesTable(props: TracesTableProps) {
         header: "agent response",
         id: "agentResponse",
         enableSorting: false,
-        cell: ({ row }) => (
-          <AgentResponseCell
-            spanKind={row.original.spanKind}
-            metadata={row.original.metadata ?? (row.original as any).attributes}
-            isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
-          />
-        ),
+        cell: ({ row }) => {
+          const parentRow = row.getParentRow();
+          const parentMetadata = parentRow
+            ? (parentRow.original.metadata ??
+              (parentRow.original as any).attributes)
+            : undefined;
+          return (
+            <AgentResponseCell
+              spanKind={row.original.spanKind}
+              metadata={
+                row.original.metadata ?? (row.original as any).attributes
+              }
+              parentMetadata={parentMetadata}
+              isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
+            />
+          );
+        },
       },
       {
         header: "start time",
@@ -928,8 +937,9 @@ export function TracesTable(props: TracesTableProps) {
                           {...{
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""
-                              }`,
+                            className: `resizer ${
+                              header.column.getIsResizing() ? "isResizing" : ""
+                            }`,
                           }}
                         />
                       </>
