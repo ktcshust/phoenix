@@ -499,6 +499,22 @@ export function SpansTable(props: SpansTableProps) {
       },
     },
     {
+      header: "intent_count",
+      id: "ebotIntentCount",
+      enableSorting: false,
+      cell: ({ row }) => {
+        if (String(row.original.spanKind).toLowerCase() !== "agent") {
+          return <Text color="text-400">--</Text>;
+        }
+        const parsed = parseAgentMetadata(row.original.metadata);
+        return (
+          <Text>
+            {parsed.intentCount !== undefined ? parsed.intentCount : "--"}
+          </Text>
+        );
+      },
+    },
+    {
       header: "start time",
       accessorKey: "startTime",
       cell: TimestampCell,

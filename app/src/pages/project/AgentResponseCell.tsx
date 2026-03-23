@@ -18,6 +18,7 @@ type ParsedAgentResponse = {
   answerStatusValue: string | undefined;
   reflectionScore: number | undefined;
   actionValue: string | undefined;
+  intentCount: number | undefined;
 };
 
 export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
@@ -27,6 +28,8 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
   let reflectionScore: number | undefined = undefined;
   // eslint-disable-next-line prefer-const -- reassigned inside try block
   let actionValue: string | undefined = undefined;
+  // eslint-disable-next-line prefer-const -- reassigned inside try block
+  let intentCount: number | undefined = undefined;
 
   try {
     let parsedMetadata: Record<string, string | boolean | number> = {};
@@ -69,6 +72,16 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     if (rawAction !== undefined && rawAction !== null) {
       actionValue = String(rawAction).toLowerCase();
     }
+
+    const rawIntentCount =
+      parsedMetadata["ebot.intent_count"] ?? parsedMetadata["intent_count"];
+    if (
+      rawIntentCount !== undefined &&
+      rawIntentCount !== null &&
+      !Number.isNaN(Number(rawIntentCount))
+    ) {
+      intentCount = Number(rawIntentCount);
+    }
   } catch (_e) {
     // Ignore parse errors
   }
@@ -79,6 +92,7 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     answerStatusValue,
     reflectionScore,
     actionValue,
+    intentCount,
   };
 }
 
