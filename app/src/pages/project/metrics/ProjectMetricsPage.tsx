@@ -16,6 +16,10 @@ import { TopModelsByCost } from "@phoenix/pages/project/metrics/TopModelsByCost"
 import { TopModelsByToken } from "@phoenix/pages/project/metrics/TopModelsByToken";
 import { TraceErrorsTimeSeries } from "@phoenix/pages/project/metrics/TraceErrorsTimeSeries";
 
+import { AgentResponseStatusTimeSeries } from "./AgentResponseStatusTimeSeries";
+import { AgentSpanCountTimeSeries } from "./AgentSpanCountTimeSeries";
+import { AgentSpanErrorsTimeSeries } from "./AgentSpanErrorsTimeSeries";
+import { AgentSuccessRateTimeSeries } from "./AgentSuccessRateTimeSeries";
 import { LLMSpanCountTimeSeries } from "./LLMSpanCountTimeSeries";
 import { LLMSpanErrorsTimeSeries } from "./LLMSpanErrorsTimeSeries";
 import { SpanAnnotationScoreTimeSeries } from "./SpanAnnotationScoreTimeSeries";
@@ -292,6 +296,43 @@ const MetricPanels = memo(function MetricPanels({
           subtitle="Tool spans with errors over time"
         >
           <ToolSpanErrorsTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+      </Flex>
+      <Flex direction="row" gap="size-200">
+        <MetricPanel title="Agent spans" subtitle="Agent span count over time">
+          <AgentSpanCountTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+        <MetricPanel
+          title="Agent spans with errors"
+          subtitle="Agent spans with exceptions over time"
+        >
+          <AgentSpanErrorsTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+      </Flex>
+      <Flex direction="row" gap="size-200">
+        <MetricPanel
+          title="Agent response status"
+          subtitle="Distribution of agent response statuses over time"
+        >
+          <AgentResponseStatusTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+        <MetricPanel
+          title="Agent success rate"
+          subtitle="Percentage of each response status over time"
+        >
+          <AgentSuccessRateTimeSeries
             projectId={projectId}
             timeRange={timeRange}
           />
