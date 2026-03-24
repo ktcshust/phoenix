@@ -62,15 +62,31 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     }
 
     // reflection_score can be a single value or an array (flattened as .0, .1, …)
-    const scorePrefix =
+    // When flattenObject processes an array, the parent key is removed and only
+    // indexed keys (e.g. ebot.reflection_score.0) remain, so we must also
+    // detect the prefix from those indexed keys.
+    let scorePrefix: string | undefined =
       "ebot.reflection_score" in parsedMetadata
         ? "ebot.reflection_score"
         : "reflection_score" in parsedMetadata
           ? "reflection_score"
           : undefined;
+    if (!scorePrefix) {
+      // Check for indexed keys produced by flattenObject on arrays
+      for (const k of Object.keys(parsedMetadata)) {
+        if (k.match(/^ebot\.reflection_score\.\d+$/)) {
+          scorePrefix = "ebot.reflection_score";
+          break;
+        }
+        if (k.match(/^reflection_score\.\d+$/)) {
+          scorePrefix = "reflection_score";
+          break;
+        }
+      }
+    }
     if (scorePrefix) {
       const directVal = parsedMetadata[scorePrefix];
-      if (!Number.isNaN(Number(directVal))) {
+      if (directVal !== undefined && !Number.isNaN(Number(directVal))) {
         // single value → wrap in array
         reflectionScore = [Number(directVal)];
       }
@@ -135,7 +151,7 @@ export function resolveStatus(parsed: ParsedAgentResponse): {
     return { statusText: "CLARIFICATION", color: "warning" };
   } else if (hasAnswerStatus) {
     if (answerStatusValue === "TIMEOUT") {
-      return { statusText: "TIMEOUT", color: "warning" };
+      return { statusText: "TIMEOUT", color: "danger" };
     } else if (answerStatusValue === "FAILED") {
       return { statusText: "FAILED", color: "danger" };
     } else if (
