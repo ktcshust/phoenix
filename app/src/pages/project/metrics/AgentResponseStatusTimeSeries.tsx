@@ -135,6 +135,7 @@ export function AgentResponseStatusTimeSeries({
                 node {
                   spanKind
                   metadata
+                  attributes
                   startTime
                 }
               }
@@ -154,15 +155,14 @@ export function AgentResponseStatusTimeSeries({
   );
 
   const chartData = useMemo(() => {
-    const bins = new Map<
-      string,
-      Record<string, string | number>
-    >();
+    const bins = new Map<string, Record<string, string | number>>();
 
     const spans = data.project.spans?.edges ?? [];
     for (const edge of spans) {
       const node = edge.node;
-      const parsed = parseAgentMetadata(node.metadata);
+      const parsed = parseAgentMetadata(
+        node.metadata ?? (node as Record<string, unknown>).attributes
+      );
       const { statusText } = resolveStatus(parsed);
       const binKey = truncateToTimeBin(
         new Date(node.startTime),
@@ -182,8 +182,7 @@ export function AgentResponseStatusTimeSeries({
 
     return Array.from(bins.values()).sort(
       (a, b) =>
-        new Date(a.timestamp).getTime() -
-        new Date(b.timestamp).getTime()
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
   }, [data, scale]);
 

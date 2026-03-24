@@ -193,6 +193,7 @@ export function SpansTable(props: SpansTableProps) {
                 spanKind
                 name
                 metadata
+                attributes
                 statusCode
                 startTime
                 latencyMs
@@ -465,7 +466,7 @@ export function SpansTable(props: SpansTableProps) {
       cell: ({ row }) => (
         <AgentResponseCell
           spanKind={row.original.spanKind}
-          metadata={row.original.metadata}
+          metadata={row.original.metadata ?? (row.original as any).attributes}
         />
       ),
     },
@@ -478,7 +479,9 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.metadata);
+        const parsed = parseAgentMetadata(
+          row.original.metadata ?? (row.original as any).attributes
+        );
         return <Text>{parsed.actionValue ?? "--"}</Text>;
       },
     },
@@ -490,7 +493,9 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.metadata);
+        const parsed = parseAgentMetadata(
+          row.original.metadata ?? (row.original as any).attributes
+        );
         return (
           <Text>
             {parsed.reflectionScore !== undefined
@@ -509,7 +514,9 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.metadata);
+        const parsed = parseAgentMetadata(
+          row.original.metadata ?? (row.original as any).attributes
+        );
         return (
           <Text>
             {parsed.intentCount !== undefined ? parsed.intentCount : "--"}

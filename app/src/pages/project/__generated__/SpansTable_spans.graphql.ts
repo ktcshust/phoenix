@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ce3723b6db1b60627a769f630d10e8b1>>
+ * @generated SignedSource<<53a7c36793c3b6e3f423570406d702a7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,7 @@ export type SpansTable_spans$data = {
   readonly spans: {
     readonly edges: ReadonlyArray<{
       readonly span: {
+        readonly attributes: string;
         readonly costSummary?: {
           readonly total: {
             readonly cost: number | null;
@@ -288,6 +289,13 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "metadata",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "attributes",
                   "storageKey": null
                 },
                 {
@@ -577,6 +585,6 @@ return {
 };
 })();
 
-(node as any).hash = "6d9c8e6ab059fb3f21b93768129924fe";
+(node as any).hash = "a4096ebc820c2f4cc5ee6dad59c09d0a";
 
 export default node;

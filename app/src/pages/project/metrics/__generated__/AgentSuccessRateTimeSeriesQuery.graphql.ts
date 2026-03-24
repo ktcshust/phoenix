@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5fb9e3b15f04bda719b5aae6e53989ab>>
+ * @generated SignedSource<<cba9268d2ac092d93ea954c4c89e55e4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,6 +24,7 @@ export type AgentSuccessRateTimeSeriesQuery$data = {
     readonly spans?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
+          readonly attributes: string;
           readonly metadata: string | null;
           readonly spanKind: SpanKind;
           readonly startTime: string;
@@ -103,10 +104,17 @@ v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "startTime",
+  "name": "attributes",
   "storageKey": null
 },
 v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "startTime",
+  "storageKey": null
+},
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -161,7 +169,8 @@ return {
                         "selections": [
                           (v5/*: any*/),
                           (v6/*: any*/),
-                          (v7/*: any*/)
+                          (v7/*: any*/),
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -237,7 +246,8 @@ return {
                           (v5/*: any*/),
                           (v6/*: any*/),
                           (v7/*: any*/),
-                          (v8/*: any*/)
+                          (v8/*: any*/),
+                          (v9/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -251,23 +261,23 @@ return {
             "type": "Project",
             "abstractKey": null
           },
-          (v8/*: any*/)
+          (v9/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "81fcf27103576871477d3b34af73b0bc",
+    "cacheID": "61771ee3a698668c01e69d1a42b091cf",
     "id": null,
     "metadata": {},
     "name": "AgentSuccessRateTimeSeriesQuery",
     "operationKind": "query",
-    "text": "query AgentSuccessRateTimeSeriesQuery(\n  $projectId: ID!\n  $timeRange: TimeRange!\n  $filterCondition: String!\n) {\n  project: node(id: $projectId) {\n    __typename\n    ... on Project {\n      spans(first: 1000, filterCondition: $filterCondition, timeRange: $timeRange, sort: {col: startTime, dir: asc}) {\n        edges {\n          node {\n            spanKind\n            metadata\n            startTime\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query AgentSuccessRateTimeSeriesQuery(\n  $projectId: ID!\n  $timeRange: TimeRange!\n  $filterCondition: String!\n) {\n  project: node(id: $projectId) {\n    __typename\n    ... on Project {\n      spans(first: 1000, filterCondition: $filterCondition, timeRange: $timeRange, sort: {col: startTime, dir: asc}) {\n        edges {\n          node {\n            spanKind\n            metadata\n            attributes\n            startTime\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2e4e3eed88c27f90d0ed86b803d7ac67";
+(node as any).hash = "a2c36ddb452e58353f5649922349deed";
 
 export default node;

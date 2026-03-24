@@ -90,15 +90,20 @@ function TooltipContent(props: Record<string, unknown>) {
             {fullTimeFormatter(new Date(label))}
           </Text>
         )}
-        {payload.map((entry: { value?: number; color?: string; name?: string }, index: number) => (
-          <ChartTooltipItem
-            key={index}
-            color={entry.color ?? ""}
-            shape="line"
-            name={entry.name ?? ""}
-            value={`${((entry.value as number) ?? 0).toFixed(1)}%`}
-          />
-        ))}
+        {payload.map(
+          (
+            entry: { value?: number; color?: string; name?: string },
+            index: number
+          ) => (
+            <ChartTooltipItem
+              key={index}
+              color={entry.color ?? ""}
+              shape="line"
+              name={entry.name ?? ""}
+              value={`${((entry.value as number) ?? 0).toFixed(1)}%`}
+            />
+          )
+        )}
       </ChartTooltip>
     );
   }
@@ -132,6 +137,7 @@ export function AgentSuccessRateTimeSeries({
                 node {
                   spanKind
                   metadata
+                  attributes
                   startTime
                 }
               }
@@ -159,7 +165,9 @@ export function AgentSuccessRateTimeSeries({
     const spans = data.project.spans?.edges ?? [];
     for (const edge of spans) {
       const node = edge.node;
-      const parsed = parseAgentMetadata(node.metadata);
+      const parsed = parseAgentMetadata(
+        node.metadata ?? (node as Record<string, unknown>).attributes
+      );
       const { statusText } = resolveStatus(parsed);
       const binKey = truncateToTimeBin(
         new Date(node.startTime),
