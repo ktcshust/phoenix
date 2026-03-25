@@ -17,6 +17,8 @@ type ParsedAgentResponse = {
   hasClarification: boolean;
   hasAnswerStatus: boolean;
   answerStatusValue: string | undefined;
+  hasMessageStatus: boolean;
+  messageStatusValue: string | undefined;
   reflectionScore: number[] | undefined;
   actionValue: string | undefined;
   intentCount: number | undefined;
@@ -26,6 +28,9 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
   let hasClarification = false;
   let hasAnswerStatus = false;
   let answerStatusValue: string | undefined = undefined;
+  let hasMessageStatus = false;
+  // eslint-disable-next-line prefer-const -- reassigned inside try block
+  let messageStatusValue: string | undefined = undefined;
   let reflectionScore: number[] | undefined = undefined;
   // eslint-disable-next-line prefer-const -- reassigned inside try block
   let actionValue: string | undefined = undefined;
@@ -54,17 +59,22 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
       "clarification" in parsedMetadata;
     hasAnswerStatus =
       "ebot.answer_status" in parsedMetadata ||
-      "answer_status" in parsedMetadata ||
-      "ebot.message_status" in parsedMetadata ||
-      "message_status" in parsedMetadata;
+      "answer_status" in parsedMetadata;
 
     const rawStatus =
-      parsedMetadata["ebot.answer_status"] ??
-      parsedMetadata["answer_status"] ??
-      parsedMetadata["ebot.message_status"] ??
-      parsedMetadata["message_status"];
+      parsedMetadata["ebot.answer_status"] ?? parsedMetadata["answer_status"];
     if (rawStatus !== undefined && rawStatus !== null) {
       answerStatusValue = String(rawStatus).toUpperCase();
+    }
+
+    // message_status: from child span classify_message_status
+    hasMessageStatus =
+      "ebot.message_status" in parsedMetadata ||
+      "message_status" in parsedMetadata;
+    const rawMessageStatus =
+      parsedMetadata["ebot.message_status"] ?? parsedMetadata["message_status"];
+    if (rawMessageStatus !== undefined && rawMessageStatus !== null) {
+      messageStatusValue = String(rawMessageStatus).toUpperCase();
     }
 
     // action: from attributes.ebot.intent_action
@@ -128,24 +138,54 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
     hasClarification,
     hasAnswerStatus,
     answerStatusValue,
+    hasMessageStatus,
+    messageStatusValue,
     reflectionScore,
     actionValue,
     intentCount,
   };
 }
 
+function resolveMessageStatusColor(
+  value: string
+): "danger" | "warning" | "success" {
+  if (value.includes("NOT_FOUND") || value.includes("FAILED")) {
+    return "danger";
+  }
+  if (value.includes("HYBRID") || value.includes("TIMEOUT")) {
+    return "warning";
+  }
+  if (value.includes("FOUND")) {
+    return "success";
+  }
+  return "warning";
+}
+
 export function resolveStatus(parsed: ParsedAgentResponse): {
   statusText: string;
   color: "danger" | "warning" | "success";
 } {
-  const { hasClarification, hasAnswerStatus, answerStatusValue, actionValue } =
-    parsed;
+  const {
+    hasClarification,
+    hasAnswerStatus,
+    answerStatusValue,
+    hasMessageStatus,
+    messageStatusValue,
+    actionValue,
+  } = parsed;
 
   if (actionValue === "direct_answer") {
     return { statusText: "DIRECT ANSWER", color: "success" };
   }
 
   if (!hasClarification && !hasAnswerStatus) {
+    // Fall back to message_status if available — show raw value
+    if (hasMessageStatus && messageStatusValue) {
+      return {
+        statusText: messageStatusValue,
+        color: resolveMessageStatusColor(messageStatusValue),
+      };
+    }
     return { statusText: "FAILED", color: "danger" };
   } else if (hasClarification) {
     return { statusText: "CLARIFICATION", color: "warning" };
@@ -156,8 +196,7 @@ export function resolveStatus(parsed: ParsedAgentResponse): {
       return { statusText: "FAILED", color: "danger" };
     } else if (
       answerStatusValue === "NOT FOUND" ||
-      answerStatusValue === "NOT_FOUND" ||
-      answerStatusValue === "SEARCH_NOT_FOUND"
+      answerStatusValue === "NOT_FOUND"
     ) {
       return { statusText: "NOT FOUND", color: "danger" };
     } else if (answerStatusValue === "HYBRID") {
@@ -190,17 +229,20 @@ export const AgentResponseCell = ({
   // Parse own metadata first
   let parsed = parseAgentMetadata(metadata);
 
+  const hasEbotKeys = (p: ParsedAgentResponse) =>
+    p.hasClarification || p.hasAnswerStatus || p.hasMessageStatus;
+
   // If own metadata has no ebot keys, fall back to parent metadata
-  if (!parsed.hasClarification && !parsed.hasAnswerStatus && parentMetadata) {
+  if (!hasEbotKeys(parsed) && parentMetadata) {
     parsed = parseAgentMetadata(parentMetadata);
   }
 
   // If still no ebot keys, fall back to child spans metadata
   // (e.g. classify_message_status span may have ebot.message_status)
-  if (!parsed.hasClarification && !parsed.hasAnswerStatus && childrenMetadata) {
+  if (!hasEbotKeys(parsed) && childrenMetadata) {
     for (const childMeta of childrenMetadata) {
       const childParsed = parseAgentMetadata(childMeta);
-      if (childParsed.hasClarification || childParsed.hasAnswerStatus) {
+      if (hasEbotKeys(childParsed)) {
         parsed = childParsed;
         break;
       }

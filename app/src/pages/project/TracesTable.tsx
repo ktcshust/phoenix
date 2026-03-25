@@ -399,23 +399,33 @@ export function TracesTable(props: TracesTableProps) {
         (row as Record<string, unknown>).attributes
       );
       // Fall back to child spans (e.g. classify_message_status with ebot.message_status)
-      if (!parsed.hasClarification && !parsed.hasAnswerStatus) {
+      if (
+        !parsed.hasClarification &&
+        !parsed.hasAnswerStatus &&
+        !parsed.hasMessageStatus
+      ) {
         const children = (row as Record<string, unknown>).children as
           | Record<string, unknown>[]
           | undefined;
         if (children) {
           for (const child of children) {
             const childParsed = parseAgentMetadata(child.attributes);
-            if (childParsed.hasClarification || childParsed.hasAnswerStatus) {
+            if (
+              childParsed.hasClarification ||
+              childParsed.hasAnswerStatus ||
+              childParsed.hasMessageStatus
+            ) {
               parsed = childParsed;
               break;
             }
           }
         }
       }
-      const { statusText } = resolveStatus(parsed);
+      const { statusText, color } = resolveStatus(parsed);
       if (statusText in counts) {
         counts[statusText].count++;
+      } else {
+        counts[statusText] = { count: 1, color };
       }
     }
     return counts;
