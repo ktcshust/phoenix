@@ -395,9 +395,9 @@ export function TracesTable(props: TracesTableProps) {
     };
     for (const row of tableData) {
       if (String(row.spanKind).toLowerCase() !== "agent") continue;
-      const metadata =
-        row.metadata ?? (row as Record<string, unknown>).attributes;
-      const parsed = parseAgentMetadata(metadata);
+      const parsed = parseAgentMetadata(
+        (row as Record<string, unknown>).attributes
+      );
       // No fallback to parent here since root spans are top-level
       const { statusText } = resolveStatus(parsed);
       if (statusText in counts) {
@@ -684,15 +684,12 @@ export function TracesTable(props: TracesTableProps) {
         cell: ({ row }) => {
           const parentRow = row.getParentRow();
           const parentMetadata = parentRow
-            ? (parentRow.original.metadata ??
-              (parentRow.original as any).attributes)
+            ? (parentRow.original as any).attributes
             : undefined;
           return (
             <AgentResponseCell
               spanKind={row.original.spanKind}
-              metadata={
-                row.original.metadata ?? (row.original as any).attributes
-              }
+              metadata={(row.original as any).attributes}
               parentMetadata={parentMetadata}
               isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
             />
@@ -709,8 +706,7 @@ export function TracesTable(props: TracesTableProps) {
           if (String(row.original.spanKind).toLowerCase() !== "agent") {
             return <Text color="text-400">--</Text>;
           }
-          const metadata =
-            row.original.metadata ?? (row.original as any).attributes;
+          const metadata = (row.original as any).attributes;
           const parentRow = row.getParentRow();
           let parsed = parseAgentMetadata(metadata);
           if (
@@ -718,10 +714,7 @@ export function TracesTable(props: TracesTableProps) {
             !parsed.hasAnswerStatus &&
             parentRow
           ) {
-            parsed = parseAgentMetadata(
-              parentRow.original.metadata ??
-                (parentRow.original as any).attributes
-            );
+            parsed = parseAgentMetadata((parentRow.original as any).attributes);
           }
           return <Text>{parsed.actionValue ?? "--"}</Text>;
         },
@@ -735,8 +728,7 @@ export function TracesTable(props: TracesTableProps) {
           if (String(row.original.spanKind).toLowerCase() !== "agent") {
             return <Text color="text-400">--</Text>;
           }
-          const metadata =
-            row.original.metadata ?? (row.original as any).attributes;
+          const metadata = (row.original as any).attributes;
           const parentRow = row.getParentRow();
           let parsed = parseAgentMetadata(metadata);
           if (
@@ -744,10 +736,7 @@ export function TracesTable(props: TracesTableProps) {
             !parsed.hasAnswerStatus &&
             parentRow
           ) {
-            parsed = parseAgentMetadata(
-              parentRow.original.metadata ??
-                (parentRow.original as any).attributes
-            );
+            parsed = parseAgentMetadata((parentRow.original as any).attributes);
           }
           return (
             <Text>
@@ -768,8 +757,7 @@ export function TracesTable(props: TracesTableProps) {
           if (String(row.original.spanKind).toLowerCase() !== "agent") {
             return <Text color="text-400">--</Text>;
           }
-          const metadata =
-            row.original.metadata ?? (row.original as any).attributes;
+          const metadata = (row.original as any).attributes;
           const parentRow = row.getParentRow();
           let parsed = parseAgentMetadata(metadata);
           if (
@@ -777,10 +765,7 @@ export function TracesTable(props: TracesTableProps) {
             !parsed.hasAnswerStatus &&
             parentRow
           ) {
-            parsed = parseAgentMetadata(
-              parentRow.original.metadata ??
-                (parentRow.original as any).attributes
-            );
+            parsed = parseAgentMetadata((parentRow.original as any).attributes);
           }
           return (
             <Text>

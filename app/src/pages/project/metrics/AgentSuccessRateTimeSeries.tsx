@@ -166,7 +166,7 @@ export function AgentSuccessRateTimeSeries({
     for (const edge of spans) {
       const node = edge.node;
       const parsed = parseAgentMetadata(
-        node.metadata ?? (node as Record<string, unknown>).attributes
+        (node as Record<string, unknown>).attributes
       );
       const { statusText } = resolveStatus(parsed);
       const binKey = truncateToTimeBin(
