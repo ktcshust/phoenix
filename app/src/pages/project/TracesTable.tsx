@@ -385,13 +385,9 @@ export function TracesTable(props: TracesTableProps) {
       string,
       { count: number; color: "success" | "danger" | "warning" }
     > = {
-      SUCCESS: { count: 0, color: "success" },
-      "NOT FOUND": { count: 0, color: "danger" },
       FAILED: { count: 0, color: "danger" },
       CLARIFICATION: { count: 0, color: "warning" },
-      TIMEOUT: { count: 0, color: "warning" },
       "DIRECT ANSWER": { count: 0, color: "success" },
-      HYBRID: { count: 0, color: "warning" },
     };
     for (const row of tableData) {
       if (String(row.spanKind).toLowerCase() !== "agent") continue;
