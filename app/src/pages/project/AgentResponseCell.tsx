@@ -61,14 +61,15 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
       answerStatusValue = String(rawStatus).toUpperCase();
     }
 
-    // action: from attributes.intent_action
-    const rawAction = parsedMetadata["intent_action"];
+    // action: from attributes.ebot.intent_action
+    const rawAction =
+      parsedMetadata["ebot.intent_action"] ?? parsedMetadata["intent_action"];
     if (rawAction !== undefined && rawAction !== null) {
       actionValue = String(rawAction).toLowerCase();
     }
 
-    // reflection_score: extract relevance_score from each item in
-    // attributes.ebot.reflection_details (JSON string or array)
+    // reflection_score: extract relevance_score from each value in
+    // attributes.ebot.reflection_details (JSON string of dict keyed by question)
     const rawReflectionDetails =
       parsedMetadata["ebot.reflection_details"] ??
       parsedMetadata["reflection_details"];
@@ -78,9 +79,13 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
           typeof rawReflectionDetails === "string"
             ? JSON.parse(rawReflectionDetails)
             : rawReflectionDetails;
-        const items = Array.isArray(details) ? details : [details];
-        const scores = items
-          .map((item: Record<string, unknown>) => Number(item?.relevance_score))
+        const items = Array.isArray(details)
+          ? details
+          : typeof details === "object" && details !== null
+            ? Object.values(details)
+            : [];
+        const scores = (items as Record<string, unknown>[])
+          .map((item) => Number(item?.relevance_score))
           .filter((v: number) => !Number.isNaN(v));
         if (scores.length > 0) {
           reflectionScore = scores;
@@ -89,27 +94,9 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
         // ignore parse errors
       }
     }
-    // Also handle case where flattenObject already indexed the array items
-    if (!reflectionScore) {
-      const scores: number[] = [];
-      for (const k of Object.keys(parsedMetadata)) {
-        const match = k.match(
-          /^(?:ebot\.)?reflection_details\.(\d+)\.relevance_score$/
-        );
-        if (match) {
-          const v = parsedMetadata[k];
-          if (!Number.isNaN(Number(v))) {
-            scores[Number(match[1])] = Number(v);
-          }
-        }
-      }
-      const filtered = scores.filter((v) => v !== undefined);
-      if (filtered.length > 0) {
-        reflectionScore = filtered;
-      }
-    }
 
-    // intent_count: len(attributes.ebot.intent_details)
+    // intent_count: number of keys in attributes.ebot.intent_details
+    // (JSON string of dict keyed by question)
     const rawIntentDetails =
       parsedMetadata["ebot.intent_details"] ?? parsedMetadata["intent_details"];
     if (rawIntentDetails !== undefined && rawIntentDetails !== null) {
@@ -120,22 +107,11 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
             : rawIntentDetails;
         if (Array.isArray(details)) {
           intentCount = details.length;
+        } else if (typeof details === "object" && details !== null) {
+          intentCount = Object.keys(details).length;
         }
       } catch (_) {
         // ignore parse errors
-      }
-    }
-    // Also handle case where flattenObject already indexed the array
-    if (intentCount === undefined) {
-      let maxIndex = -1;
-      for (const k of Object.keys(parsedMetadata)) {
-        const match = k.match(/^(?:ebot\.)?intent_details\.(\d+)/);
-        if (match) {
-          maxIndex = Math.max(maxIndex, Number(match[1]));
-        }
-      }
-      if (maxIndex >= 0) {
-        intentCount = maxIndex + 1;
       }
     }
   } catch (_e) {
