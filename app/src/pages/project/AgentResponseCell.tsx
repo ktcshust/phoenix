@@ -9,6 +9,7 @@ type AgentResponseCellProps = {
   spanKind: string;
   metadata: unknown;
   parentMetadata?: unknown;
+  childrenMetadata?: unknown[];
   isAdditionalSpansRow?: boolean;
 };
 
@@ -53,10 +54,15 @@ export function parseAgentMetadata(metadata: unknown): ParsedAgentResponse {
       "clarification" in parsedMetadata;
     hasAnswerStatus =
       "ebot.answer_status" in parsedMetadata ||
-      "answer_status" in parsedMetadata;
+      "answer_status" in parsedMetadata ||
+      "ebot.message_status" in parsedMetadata ||
+      "message_status" in parsedMetadata;
 
     const rawStatus =
-      parsedMetadata["ebot.answer_status"] ?? parsedMetadata["answer_status"];
+      parsedMetadata["ebot.answer_status"] ??
+      parsedMetadata["answer_status"] ??
+      parsedMetadata["ebot.message_status"] ??
+      parsedMetadata["message_status"];
     if (rawStatus !== undefined && rawStatus !== null) {
       answerStatusValue = String(rawStatus).toUpperCase();
     }
@@ -150,7 +156,8 @@ export function resolveStatus(parsed: ParsedAgentResponse): {
       return { statusText: "FAILED", color: "danger" };
     } else if (
       answerStatusValue === "NOT FOUND" ||
-      answerStatusValue === "NOT_FOUND"
+      answerStatusValue === "NOT_FOUND" ||
+      answerStatusValue === "SEARCH_NOT_FOUND"
     ) {
       return { statusText: "NOT FOUND", color: "danger" };
     } else if (answerStatusValue === "HYBRID") {
@@ -167,6 +174,7 @@ export const AgentResponseCell = ({
   spanKind,
   metadata,
   parentMetadata,
+  childrenMetadata,
   isAdditionalSpansRow,
 }: AgentResponseCellProps) => {
   if (isAdditionalSpansRow) {
@@ -185,6 +193,18 @@ export const AgentResponseCell = ({
   // If own metadata has no ebot keys, fall back to parent metadata
   if (!parsed.hasClarification && !parsed.hasAnswerStatus && parentMetadata) {
     parsed = parseAgentMetadata(parentMetadata);
+  }
+
+  // If still no ebot keys, fall back to child spans metadata
+  // (e.g. classify_message_status span may have ebot.message_status)
+  if (!parsed.hasClarification && !parsed.hasAnswerStatus && childrenMetadata) {
+    for (const childMeta of childrenMetadata) {
+      const childParsed = parseAgentMetadata(childMeta);
+      if (childParsed.hasClarification || childParsed.hasAnswerStatus) {
+        parsed = childParsed;
+        break;
+      }
+    }
   }
 
   const { statusText, color } = resolveStatus(parsed);

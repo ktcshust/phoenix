@@ -395,10 +395,24 @@ export function TracesTable(props: TracesTableProps) {
     };
     for (const row of tableData) {
       if (String(row.spanKind).toLowerCase() !== "agent") continue;
-      const parsed = parseAgentMetadata(
+      let parsed = parseAgentMetadata(
         (row as Record<string, unknown>).attributes
       );
-      // No fallback to parent here since root spans are top-level
+      // Fall back to child spans (e.g. classify_message_status with ebot.message_status)
+      if (!parsed.hasClarification && !parsed.hasAnswerStatus) {
+        const children = (row as Record<string, unknown>).children as
+          | Record<string, unknown>[]
+          | undefined;
+        if (children) {
+          for (const child of children) {
+            const childParsed = parseAgentMetadata(child.attributes);
+            if (childParsed.hasClarification || childParsed.hasAnswerStatus) {
+              parsed = childParsed;
+              break;
+            }
+          }
+        }
+      }
       const { statusText } = resolveStatus(parsed);
       if (statusText in counts) {
         counts[statusText].count++;
@@ -686,11 +700,15 @@ export function TracesTable(props: TracesTableProps) {
           const parentMetadata = parentRow
             ? (parentRow.original as any).attributes
             : undefined;
+          const childrenMetadata = row.subRows
+            ?.map((sub) => (sub.original as any).attributes)
+            .filter(Boolean);
           return (
             <AgentResponseCell
               spanKind={row.original.spanKind}
               metadata={(row.original as any).attributes}
               parentMetadata={parentMetadata}
+              childrenMetadata={childrenMetadata}
               isAdditionalSpansRow={Boolean(row.original.__additionalRow)}
             />
           );
