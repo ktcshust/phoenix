@@ -295,7 +295,7 @@ class Span(Node):
             value = await info.context.data_loaders.span_fields.load(
                 (self.id, models.Span.attributes),
             )
-        return json.dumps(_hide_embedding_vectors(value), cls=_JSONEncoder)
+        return json.dumps(_hide_embedding_vectors(value), cls=_JSONEncoder, ensure_ascii=False)
 
     @strawberry.field(
         description="Metadata as a JSON string",
@@ -888,7 +888,7 @@ def _convert_metadata_to_string(metadata: Any) -> Optional[str]:
     if metadata is None or isinstance(metadata, str):
         return metadata
     try:
-        return json.dumps(metadata)
+        return json.dumps(metadata, ensure_ascii=False)
     except Exception:
         return str(metadata)
 
