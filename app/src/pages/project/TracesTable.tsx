@@ -59,6 +59,10 @@ import { useTracingContext } from "@phoenix/contexts/TracingContext";
 import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
+import {
+  flattenObject,
+  jsonStringToFlatObject,
+} from "@phoenix/utils/jsonUtils";
 
 import type {
   SpanStatusCode,
@@ -796,6 +800,34 @@ export function TracesTable(props: TracesTableProps) {
               {parsed.intentCount !== undefined ? parsed.intentCount : "--"}
             </Text>
           );
+        },
+      },
+      {
+        header: "delivery status",
+        id: "ebotDeliveryStatus",
+        maxSize: 150,
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (row.original.__additionalRow) return null;
+          // Look through child spans to find classify_kafka_delivery
+          for (const sub of row.subRows ?? []) {
+            if (sub.original.name === "classify_kafka_delivery") {
+              const attrs = (sub.original as any).attributes;
+              const parsed =
+                typeof attrs === "string"
+                  ? jsonStringToFlatObject(attrs)
+                  : typeof attrs === "object" && attrs !== null
+                    ? flattenObject({ obj: attrs as object })
+                    : {};
+              const status =
+                parsed["ebot.kafka.delivery_status"] ??
+                parsed["ebot.delivery_status"];
+              if (status !== undefined && status !== null) {
+                return <Text>{String(status)}</Text>;
+              }
+            }
+          }
+          return <Text color="text-400">--</Text>;
         },
       },
       {
