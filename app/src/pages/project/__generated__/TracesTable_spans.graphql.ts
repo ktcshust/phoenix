@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<30f20d72a64fed26e8b1c1373b585492>>
+ * @generated SignedSource<<92edebeed701c794e9f53468bf127981>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -167,34 +167,41 @@ v5 = {
   "storageKey": null
 },
 v6 = {
-  "alias": null,
+  "alias": "statusCode",
   "args": null,
   "kind": "ScalarField",
-  "name": "startTime",
+  "name": "propagatedStatusCode",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "endTime",
+  "name": "startTime",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "latencyMs",
+  "name": "endTime",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "latencyMs",
+  "storageKey": null
+},
+v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "parentId",
   "storageKey": null
 },
-v10 = [
+v11 = [
   {
     "alias": "value",
     "args": null,
@@ -203,48 +210,48 @@ v10 = [
     "storageKey": null
   }
 ],
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "SpanIOValue",
   "kind": "LinkedField",
   "name": "input",
   "plural": false,
-  "selections": (v10/*: any*/),
+  "selections": (v11/*: any*/),
   "storageKey": null
 },
-v12 = {
+v13 = {
   "alias": null,
   "args": null,
   "concreteType": "SpanIOValue",
   "kind": "LinkedField",
   "name": "output",
   "plural": false,
-  "selections": (v10/*: any*/),
-  "storageKey": null
-},
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "spanId",
+  "selections": (v11/*: any*/),
   "storageKey": null
 },
 v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "traceId",
+  "name": "spanId",
   "storageKey": null
 },
 v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "label",
+  "name": "traceId",
   "storageKey": null
 },
 v16 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "label",
+  "storageKey": null
+},
+v17 = {
   "alias": null,
   "args": null,
   "concreteType": "SpanAnnotation",
@@ -254,7 +261,7 @@ v16 = {
   "selections": [
     (v2/*: any*/),
     (v1/*: any*/),
-    (v15/*: any*/),
+    (v16/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -279,12 +286,12 @@ v16 = {
   ],
   "storageKey": null
 },
-v17 = {
+v18 = {
   "args": null,
   "kind": "FragmentSpread",
   "name": "AnnotationSummaryGroup"
 },
-v18 = {
+v19 = {
   "alias": null,
   "args": null,
   "concreteType": "DocumentRetrievalMetrics",
@@ -440,16 +447,10 @@ return {
                 (v1/*: any*/),
                 (v4/*: any*/),
                 (v5/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "statusCode",
-                  "storageKey": null
-                },
                 (v6/*: any*/),
                 (v7/*: any*/),
                 (v8/*: any*/),
+                (v9/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -457,10 +458,10 @@ return {
                   "name": "cumulativeTokenCountTotal",
                   "storageKey": null
                 },
-                (v9/*: any*/),
-                (v11/*: any*/),
+                (v10/*: any*/),
                 (v12/*: any*/),
                 (v13/*: any*/),
+                (v14/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -470,7 +471,7 @@ return {
                   "plural": false,
                   "selections": [
                     (v2/*: any*/),
-                    (v14/*: any*/),
+                    (v15/*: any*/),
                     {
                       "alias": null,
                       "args": null,
@@ -517,7 +518,7 @@ return {
                   ],
                   "storageKey": null
                 },
-                (v16/*: any*/),
+                (v17/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -541,7 +542,7 @@ return {
                           "name": "fraction",
                           "storageKey": null
                         },
-                        (v15/*: any*/)
+                        (v16/*: any*/)
                       ],
                       "storageKey": null
                     },
@@ -556,8 +557,8 @@ return {
                   ],
                   "storageKey": null
                 },
-                (v17/*: any*/),
                 (v18/*: any*/),
+                (v19/*: any*/),
                 {
                   "alias": null,
                   "args": [
@@ -593,17 +594,11 @@ return {
                             (v1/*: any*/),
                             (v4/*: any*/),
                             (v5/*: any*/),
-                            {
-                              "alias": "statusCode",
-                              "args": null,
-                              "kind": "ScalarField",
-                              "name": "propagatedStatusCode",
-                              "storageKey": null
-                            },
                             (v6/*: any*/),
                             (v7/*: any*/),
                             (v8/*: any*/),
                             (v9/*: any*/),
+                            (v10/*: any*/),
                             {
                               "alias": "cumulativeTokenCountTotal",
                               "args": null,
@@ -611,9 +606,9 @@ return {
                               "name": "tokenCountTotal",
                               "storageKey": null
                             },
-                            (v11/*: any*/),
                             (v12/*: any*/),
                             (v13/*: any*/),
+                            (v14/*: any*/),
                             {
                               "alias": null,
                               "args": null,
@@ -623,13 +618,13 @@ return {
                               "plural": false,
                               "selections": [
                                 (v2/*: any*/),
-                                (v14/*: any*/)
+                                (v15/*: any*/)
                               ],
                               "storageKey": null
                             },
-                            (v16/*: any*/),
                             (v17/*: any*/),
                             (v18/*: any*/),
+                            (v19/*: any*/),
                             {
                               "args": null,
                               "kind": "FragmentSpread",
@@ -710,6 +705,6 @@ return {
 };
 })();
 
-(node as any).hash = "7a0155e2f26352da29401871689e4357";
+(node as any).hash = "aeaab120a39d5daeb9c868b0fa334e3f";
 
 export default node;

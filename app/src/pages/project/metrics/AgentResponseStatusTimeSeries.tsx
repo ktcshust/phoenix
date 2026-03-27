@@ -35,21 +35,21 @@ import { intFormatter } from "@phoenix/utils/numberFormatUtils";
 import type { AgentResponseStatusTimeSeriesQuery } from "./__generated__/AgentResponseStatusTimeSeriesQuery.graphql";
 
 const STATUS_COLORS: Record<string, string> = {
-  SUCCESS: "var(--ac-global-color-green-700)",
-  "DIRECT ANSWER": "var(--ac-global-color-blue-700)",
-  CLARIFICATION: "var(--ac-global-color-orange-700)",
-  "NOT FOUND": "var(--ac-global-color-red-500)",
-  TIMEOUT: "var(--ac-global-color-yellow-700)",
   FAILED: "var(--ac-global-color-red-900)",
+  CLARIFICATION: "var(--ac-global-color-orange-700)",
+  SEARCH_FOUND: "var(--ac-global-color-green-700)",
+  SEARCH_HYBRID: "var(--ac-global-color-yellow-700)",
+  DIRECT_ANSWER: "var(--ac-global-color-blue-700)",
+  SEARCH_NOT_FOUND: "var(--ac-global-color-red-500)",
 };
 
 const STATUS_ORDER = [
   "FAILED",
-  "TIMEOUT",
-  "NOT FOUND",
+  "SEARCH_NOT_FOUND",
   "CLARIFICATION",
-  "DIRECT ANSWER",
-  "SUCCESS",
+  "SEARCH_HYBRID",
+  "DIRECT_ANSWER",
+  "SEARCH_FOUND",
 ] as const;
 
 type TimeBinScale = "minute" | "hour" | "day" | "week" | "month" | "year";

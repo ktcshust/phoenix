@@ -34,20 +34,20 @@ import type { ProjectMetricViewProps } from "@phoenix/pages/project/metrics/type
 import type { AgentSuccessRateTimeSeriesQuery } from "./__generated__/AgentSuccessRateTimeSeriesQuery.graphql";
 
 const STATUS_COLORS: Record<string, string> = {
-  SUCCESS: "var(--ac-global-color-green-700)",
-  "DIRECT ANSWER": "var(--ac-global-color-blue-700)",
-  CLARIFICATION: "var(--ac-global-color-orange-700)",
-  "NOT FOUND": "var(--ac-global-color-red-500)",
-  TIMEOUT: "var(--ac-global-color-yellow-700)",
   FAILED: "var(--ac-global-color-red-900)",
+  CLARIFICATION: "var(--ac-global-color-orange-700)",
+  SEARCH_FOUND: "var(--ac-global-color-green-700)",
+  SEARCH_HYBRID: "var(--ac-global-color-yellow-700)",
+  DIRECT_ANSWER: "var(--ac-global-color-blue-700)",
+  SEARCH_NOT_FOUND: "var(--ac-global-color-red-500)",
 };
 
 const STATUS_ORDER = [
-  "SUCCESS",
-  "DIRECT ANSWER",
+  "SEARCH_FOUND",
+  "DIRECT_ANSWER",
   "CLARIFICATION",
-  "NOT FOUND",
-  "TIMEOUT",
+  "SEARCH_HYBRID",
+  "SEARCH_NOT_FOUND",
   "FAILED",
 ] as const;
 
@@ -244,8 +244,8 @@ export function AgentSuccessRateTimeSeries({
             type="monotone"
             dataKey={status}
             stroke={STATUS_COLORS[status]}
-            strokeWidth={status === "SUCCESS" ? 2.5 : 1.5}
-            dot={{ r: status === "SUCCESS" ? 3 : 2 }}
+            strokeWidth={status === "SEARCH_FOUND" ? 2.5 : 1.5}
+            dot={{ r: status === "SEARCH_FOUND" ? 3 : 2 }}
             activeDot={{ r: 4 }}
           />
         ))}
