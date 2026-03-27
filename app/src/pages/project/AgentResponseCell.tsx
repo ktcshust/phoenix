@@ -152,6 +152,9 @@ function resolveMessageStatusColor(
   if (value.includes("NOT_FOUND") || value.includes("FAILED")) {
     return "danger";
   }
+  if (value.includes("DIRECT_ANSWER")) {
+    return "success";
+  }
   if (value.includes("HYBRID") || value.includes("TIMEOUT")) {
     return "warning";
   }
