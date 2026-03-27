@@ -805,7 +805,7 @@ export function TracesTable(props: TracesTableProps) {
       {
         header: "delivery status",
         id: "ebotDeliveryStatus",
-        maxSize: 150,
+        maxSize: 325,
         enableSorting: false,
         cell: ({ row }) => {
           if (row.original.__additionalRow) return null;
