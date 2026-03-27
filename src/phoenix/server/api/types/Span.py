@@ -295,7 +295,11 @@ class Span(Node):
             value = await info.context.data_loaders.span_fields.load(
                 (self.id, models.Span.attributes),
             )
-        return json.dumps(_hide_embedding_vectors(value), cls=_JSONEncoder, ensure_ascii=False)
+        return json.dumps(
+            _normalize_json_string_unicode(_hide_embedding_vectors(value)),
+            cls=_JSONEncoder,
+            ensure_ascii=False,
+        )
 
     @strawberry.field(
         description="Metadata as a JSON string",
@@ -840,6 +844,27 @@ class Span(Node):
             )
             for entry in entries
         ]
+
+
+def _normalize_json_string_unicode(value: Any) -> Any:
+    """
+    Recursively walk attribute values and re-serialize any JSON string values
+    with ensure_ascii=False so that unicode escape sequences (e.g. \\u0110)
+    are replaced with actual unicode characters (e.g. Đ).
+    """
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return value
+        if isinstance(parsed, (dict, list)):
+            return json.dumps(parsed, ensure_ascii=False)
+        return value
+    elif isinstance(value, dict):
+        return {k: _normalize_json_string_unicode(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [_normalize_json_string_unicode(v) for v in value]
+    return value
 
 
 def _hide_embedding_vectors(attributes: Mapping[str, Any]) -> Mapping[str, Any]:

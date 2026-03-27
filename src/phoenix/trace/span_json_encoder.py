@@ -57,7 +57,7 @@ class SpanJSONEncoder(json.JSONEncoder):
 
 
 def span_to_json(span: Span) -> str:
-    return json.dumps(span, cls=SpanJSONEncoder)
+    return json.dumps(span, cls=SpanJSONEncoder, ensure_ascii=False)
 
 
 def spans_to_jsonl(spans: list[Span]) -> str:

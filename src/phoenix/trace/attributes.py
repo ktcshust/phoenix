@@ -359,7 +359,7 @@ def _flatten_mapping(
         prefixed_key = f"{prefix}{separator}{key}" if prefix else key
         if isinstance(value, Mapping):
             if json_string_attributes and prefixed_key.endswith(JSON_STRING_ATTRIBUTES):
-                yield prefixed_key, json.dumps(value)
+                yield prefixed_key, json.dumps(value, ensure_ascii=False)
             else:
                 yield from _flatten_mapping(
                     value,

@@ -85,7 +85,7 @@ def decode_otlp_span(otlp_span: otlp.Span) -> Span:
     if (input_value := get_attribute_value(attributes, INPUT_VALUE)) and not isinstance(
         input_value, str
     ):
-        attributes["input"]["value"] = json.dumps(input_value)
+        attributes["input"]["value"] = json.dumps(input_value, ensure_ascii=False)
         attributes["input"]["mime_type"] = OpenInferenceMimeTypeValues.JSON.value
 
     return Span(
@@ -202,7 +202,7 @@ def encode_span_to_otlp(span: Span) -> otlp.Span:
         elif isinstance(value, Mapping):
             attributes.pop(key, None)
             if key.endswith(JSON_STRING_ATTRIBUTES):
-                attributes[key] = json.dumps(jsonify(value))
+                attributes[key] = json.dumps(jsonify(value), ensure_ascii=False)
             else:
                 attributes.update(
                     flatten(
