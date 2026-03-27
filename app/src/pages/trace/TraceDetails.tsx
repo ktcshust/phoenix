@@ -67,7 +67,7 @@ export function TraceDetails(props: TraceDetailsProps) {
               ) {
                 edges {
                   span: node {
-                    statusCode
+                    statusCode: propagatedStatusCode
                     id
                     spanId
                     parentId
