@@ -242,6 +242,13 @@ export function SpansTable(props: SpansTableProps) {
                     cost
                   }
                 }
+                descendants(first: 10) @include(if: $rootSpansOnly) {
+                  edges {
+                    node {
+                      attributes
+                    }
+                  }
+                }
                 ...AnnotationSummaryGroup
               }
             }
@@ -463,12 +470,18 @@ export function SpansTable(props: SpansTableProps) {
       id: "agentResponse",
       maxSize: 120,
       enableSorting: false,
-      cell: ({ row }) => (
-        <AgentResponseCell
-          spanKind={row.original.spanKind}
-          metadata={row.original.attributes}
-        />
-      ),
+      cell: ({ row }) => {
+        const childrenMetadata = (row.original as any).descendants?.edges
+          ?.map((e: any) => e.node.attributes)
+          .filter(Boolean);
+        return (
+          <AgentResponseCell
+            spanKind={row.original.spanKind}
+            metadata={row.original.attributes}
+            childrenMetadata={childrenMetadata}
+          />
+        );
+      },
     },
     {
       header: "action",
@@ -479,7 +492,21 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.attributes);
+        let parsed = parseAgentMetadata(row.original.attributes);
+        if (!parsed.hasClarification && !parsed.hasAnswerStatus) {
+          const childrenMeta = (row.original as any).descendants?.edges
+            ?.map((e: any) => e.node.attributes)
+            .filter(Boolean) as unknown[] | undefined;
+          if (childrenMeta) {
+            for (const childMeta of childrenMeta) {
+              const childParsed = parseAgentMetadata(childMeta);
+              if (childParsed.hasClarification || childParsed.hasAnswerStatus || childParsed.hasMessageStatus) {
+                parsed = childParsed;
+                break;
+              }
+            }
+          }
+        }
         return <Text>{parsed.actionValue ?? "--"}</Text>;
       },
     },
@@ -491,7 +518,21 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.attributes);
+        let parsed = parseAgentMetadata(row.original.attributes);
+        if (!parsed.hasClarification && !parsed.hasAnswerStatus) {
+          const childrenMeta = (row.original as any).descendants?.edges
+            ?.map((e: any) => e.node.attributes)
+            .filter(Boolean) as unknown[] | undefined;
+          if (childrenMeta) {
+            for (const childMeta of childrenMeta) {
+              const childParsed = parseAgentMetadata(childMeta);
+              if (childParsed.hasClarification || childParsed.hasAnswerStatus || childParsed.hasMessageStatus) {
+                parsed = childParsed;
+                break;
+              }
+            }
+          }
+        }
         return (
           <Text>
             {parsed.reflectionScore !== undefined
@@ -510,7 +551,21 @@ export function SpansTable(props: SpansTableProps) {
         if (String(row.original.spanKind).toLowerCase() !== "agent") {
           return <Text color="text-400">--</Text>;
         }
-        const parsed = parseAgentMetadata(row.original.attributes);
+        let parsed = parseAgentMetadata(row.original.attributes);
+        if (!parsed.hasClarification && !parsed.hasAnswerStatus) {
+          const childrenMeta = (row.original as any).descendants?.edges
+            ?.map((e: any) => e.node.attributes)
+            .filter(Boolean) as unknown[] | undefined;
+          if (childrenMeta) {
+            for (const childMeta of childrenMeta) {
+              const childParsed = parseAgentMetadata(childMeta);
+              if (childParsed.hasClarification || childParsed.hasAnswerStatus || childParsed.hasMessageStatus) {
+                parsed = childParsed;
+                break;
+              }
+            }
+          }
+        }
         return (
           <Text>
             {parsed.intentCount !== undefined ? parsed.intentCount : "--"}
@@ -791,9 +846,8 @@ export function SpansTable(props: SpansTableProps) {
                           {...{
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
-                            className: `resizer ${
-                              header.column.getIsResizing() ? "isResizing" : ""
-                            }`,
+                            className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""
+                              }`,
                           }}
                         />
                       </>

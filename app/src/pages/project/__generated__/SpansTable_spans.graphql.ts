@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<53a7c36793c3b6e3f423570406d702a7>>
+ * @generated SignedSource<<dbdf42c125eaaf4eda91d9833a263c40>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,13 @@ export type SpansTable_spans$data = {
           };
         } | null;
         readonly cumulativeTokenCountTotal?: number | null;
+        readonly descendants?: {
+          readonly edges: ReadonlyArray<{
+            readonly node: {
+              readonly attributes: string;
+            };
+          }>;
+        };
         readonly documentRetrievalMetrics: ReadonlyArray<{
           readonly evaluationName: string;
           readonly hit: number | null;
@@ -107,6 +114,13 @@ v2 = {
 v3 = {
   "alias": null,
   "args": null,
+  "kind": "ScalarField",
+  "name": "attributes",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
   "concreteType": "SpanCostSummary",
   "kind": "LinkedField",
   "name": "costSummary",
@@ -133,7 +147,7 @@ v3 = {
   ],
   "storageKey": null
 },
-v4 = [
+v5 = [
   {
     "alias": "value",
     "args": null,
@@ -142,7 +156,7 @@ v4 = [
     "storageKey": null
   }
 ],
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -291,13 +305,7 @@ return {
                   "name": "metadata",
                   "storageKey": null
                 },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "attributes",
-                  "storageKey": null
-                },
+                (v3/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -331,7 +339,7 @@ return {
                       "name": "tokenCountTotal",
                       "storageKey": null
                     },
-                    (v3/*: any*/)
+                    (v4/*: any*/)
                   ]
                 },
                 {
@@ -345,6 +353,46 @@ return {
                       "kind": "ScalarField",
                       "name": "cumulativeTokenCountTotal",
                       "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": [
+                        {
+                          "kind": "Literal",
+                          "name": "first",
+                          "value": 10
+                        }
+                      ],
+                      "concreteType": "SpanConnection",
+                      "kind": "LinkedField",
+                      "name": "descendants",
+                      "plural": false,
+                      "selections": [
+                        {
+                          "alias": null,
+                          "args": null,
+                          "concreteType": "SpanEdge",
+                          "kind": "LinkedField",
+                          "name": "edges",
+                          "plural": true,
+                          "selections": [
+                            {
+                              "alias": null,
+                              "args": null,
+                              "concreteType": "Span",
+                              "kind": "LinkedField",
+                              "name": "node",
+                              "plural": false,
+                              "selections": [
+                                (v3/*: any*/)
+                              ],
+                              "storageKey": null
+                            }
+                          ],
+                          "storageKey": null
+                        }
+                      ],
+                      "storageKey": "descendants(first:10)"
                     }
                   ]
                 },
@@ -376,7 +424,7 @@ return {
                       "kind": "Condition",
                       "passingValue": true,
                       "selections": [
-                        (v3/*: any*/)
+                        (v4/*: any*/)
                       ]
                     }
                   ],
@@ -389,7 +437,7 @@ return {
                   "kind": "LinkedField",
                   "name": "input",
                   "plural": false,
-                  "selections": (v4/*: any*/),
+                  "selections": (v5/*: any*/),
                   "storageKey": null
                 },
                 {
@@ -399,7 +447,7 @@ return {
                   "kind": "LinkedField",
                   "name": "output",
                   "plural": false,
-                  "selections": (v4/*: any*/),
+                  "selections": (v5/*: any*/),
                   "storageKey": null
                 },
                 {
@@ -412,7 +460,7 @@ return {
                   "selections": [
                     (v2/*: any*/),
                     (v1/*: any*/),
-                    (v5/*: any*/),
+                    (v6/*: any*/),
                     {
                       "alias": null,
                       "args": null,
@@ -460,7 +508,7 @@ return {
                           "name": "fraction",
                           "storageKey": null
                         },
-                        (v5/*: any*/)
+                        (v6/*: any*/)
                       ],
                       "storageKey": null
                     },
@@ -585,6 +633,6 @@ return {
 };
 })();
 
-(node as any).hash = "a4096ebc820c2f4cc5ee6dad59c09d0a";
+(node as any).hash = "b8429df187217c23b0993324b4838c76";
 
 export default node;
