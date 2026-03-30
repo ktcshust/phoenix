@@ -158,9 +158,7 @@ export function AgentResponseStatusTimeSeries({
     const spans = data.project.spans?.edges ?? [];
     for (const edge of spans) {
       const node = edge.node;
-      const parsed = parseAgentMetadata(
-        (node as Record<string, unknown>).attributes
-      );
+      const parsed = parseAgentMetadata(node.metadata);
       const { statusText } = resolveStatus(parsed);
       const binKey = truncateToTimeBin(
         new Date(node.startTime),
