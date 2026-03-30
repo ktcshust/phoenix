@@ -59,6 +59,11 @@ import { useTracingContext } from "@phoenix/contexts/TracingContext";
 import { SummaryValueLabels } from "@phoenix/pages/project/AnnotationSummary";
 import { MetadataTableCell } from "@phoenix/pages/project/MetadataTableCell";
 import { useTracePagination } from "@phoenix/pages/trace/TracePaginationContext";
+import {
+  flattenObject,
+  jsonStringToFlatObject,
+  safelyParseJSONString,
+} from "@phoenix/utils/jsonUtils";
 
 import type {
   SpanStatusCode,
@@ -824,6 +829,52 @@ export function TracesTable(props: TracesTableProps) {
             return null;
           }
           return <LatencyText latencyMs={value} />;
+        },
+      },
+      {
+        header: "TIMEOUT",
+        id: "ebotTimeout",
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (row.original.__additionalRow) return null;
+          const latencyMs = row.original.latencyMs;
+          if (latencyMs === null || typeof latencyMs !== "number") {
+            return <Text color="text-400">--</Text>;
+          }
+          const attributes = (row.original as any).attributes;
+          let timeoutSeconds: number | undefined = undefined;
+          try {
+            let parsedAttrs: Record<string, unknown> = {};
+            if (typeof attributes === "string") {
+              parsedAttrs = jsonStringToFlatObject(attributes);
+              if (Object.keys(parsedAttrs).length === 0) {
+                const loose = safelyParseJSONString(attributes);
+                if (typeof loose === "object" && loose !== null) {
+                  parsedAttrs = flattenObject({ obj: loose as object });
+                }
+              }
+            } else if (typeof attributes === "object" && attributes !== null) {
+              parsedAttrs = flattenObject({ obj: attributes as object });
+            }
+            const raw =
+              parsedAttrs["ebot.config.TIMEOUT"] ??
+              parsedAttrs["ebot.config.timeout"];
+            if (raw !== undefined && raw !== null) {
+              timeoutSeconds = Number(raw);
+            }
+          } catch {
+            // ignore parse errors
+          }
+          if (timeoutSeconds === undefined || isNaN(timeoutSeconds)) {
+            return <Text color="text-400">--</Text>;
+          }
+          const latencySeconds = latencyMs / 1000;
+          const isTimeout = timeoutSeconds < latencySeconds;
+          return (
+            <Text color={isTimeout ? "danger" : "success"}>
+              {isTimeout ? "TIMEOUT" : "TIMEIN"}
+            </Text>
+          );
         },
       },
       {
