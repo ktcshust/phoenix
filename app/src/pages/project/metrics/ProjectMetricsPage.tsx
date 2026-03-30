@@ -20,9 +20,13 @@ import { AgentResponseStatusTimeSeries } from "./AgentResponseStatusTimeSeries";
 import { AgentSpanCountTimeSeries } from "./AgentSpanCountTimeSeries";
 import { AgentSpanErrorsTimeSeries } from "./AgentSpanErrorsTimeSeries";
 import { AgentSuccessRateTimeSeries } from "./AgentSuccessRateTimeSeries";
+import { ExceptionRateTimeSeries } from "./ExceptionRateTimeSeries";
+import { ExceptionStatusTimeSeries } from "./ExceptionStatusTimeSeries";
 import { LLMSpanCountTimeSeries } from "./LLMSpanCountTimeSeries";
 import { LLMSpanErrorsTimeSeries } from "./LLMSpanErrorsTimeSeries";
 import { SpanAnnotationScoreTimeSeries } from "./SpanAnnotationScoreTimeSeries";
+import { TimeoutRateTimeSeries } from "./TimeoutRateTimeSeries";
+import { TimeoutStatusTimeSeries } from "./TimeoutStatusTimeSeries";
 import { ToolSpanCountTimeSeries } from "./ToolSpanCountTimeSeries";
 import { ToolSpanErrorsTimeSeries } from "./ToolSpanErrorsTimeSeries";
 import { TraceCountTimeSeries } from "./TraceCountTimeSeries";
@@ -333,6 +337,43 @@ const MetricPanels = memo(function MetricPanels({
           subtitle="Percentage of each response status over time"
         >
           <AgentSuccessRateTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+      </Flex>
+      <Flex direction="row" gap="size-200">
+        <MetricPanel
+          title="Timeout status"
+          subtitle="TIMEIN vs TIMEOUT count over time"
+        >
+          <TimeoutStatusTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+        <MetricPanel
+          title="Timeout rate"
+          subtitle="Percentage of TIMEIN vs TIMEOUT over time"
+        >
+          <TimeoutRateTimeSeries projectId={projectId} timeRange={timeRange} />
+        </MetricPanel>
+      </Flex>
+      <Flex direction="row" gap="size-200">
+        <MetricPanel
+          title="Exception status"
+          subtitle="non-exception vs exception count over time"
+        >
+          <ExceptionStatusTimeSeries
+            projectId={projectId}
+            timeRange={timeRange}
+          />
+        </MetricPanel>
+        <MetricPanel
+          title="Exception rate"
+          subtitle="Percentage of non-exception vs exception over time"
+        >
+          <ExceptionRateTimeSeries
             projectId={projectId}
             timeRange={timeRange}
           />
