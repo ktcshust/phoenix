@@ -51,21 +51,19 @@ const STATUS_ORDER = [
   "FAILED",
 ] as const;
 
-type TimeBinScale = "minute" | "hour" | "day" | "week" | "month" | "year";
-
 function truncateToTimeBin(date: Date, scale: TimeBinScale): string {
   const d = new Date(date);
-  if (scale === "minute") {
+  if (scale === "MINUTE") {
     d.setSeconds(0, 0);
-  } else if (scale === "hour") {
+  } else if (scale === "HOUR") {
     d.setMinutes(0, 0, 0);
-  } else if (scale === "day") {
+  } else if (scale === "DAY") {
     d.setHours(0, 0, 0, 0);
-  } else if (scale === "week") {
+  } else if (scale === "WEEK") {
     const day = d.getDay();
     d.setDate(d.getDate() - day);
     d.setHours(0, 0, 0, 0);
-  } else if (scale === "month") {
+  } else if (scale === "MONTH") {
     d.setDate(1);
     d.setHours(0, 0, 0, 0);
   } else {

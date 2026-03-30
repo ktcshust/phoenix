@@ -450,6 +450,48 @@ export function TracesTable(props: TracesTableProps) {
     return { okCount, errorCount };
   }, [tableData]);
 
+  const timeoutCounts = useMemo(() => {
+    let timeinCount = 0;
+    let timeoutCount = 0;
+    for (const row of tableData) {
+      if (String(row.spanKind).toLowerCase() !== "agent") continue;
+      const latencyMs = row.latencyMs;
+      if (latencyMs === null || typeof latencyMs !== "number") continue;
+      const attributes = (row as Record<string, unknown>).attributes;
+      let timeoutSeconds: number | undefined = undefined;
+      try {
+        let parsedAttrs: Record<string, unknown> = {};
+        if (typeof attributes === "string") {
+          parsedAttrs = jsonStringToFlatObject(attributes);
+          if (Object.keys(parsedAttrs).length === 0) {
+            const loose = safelyParseJSONString(attributes);
+            if (typeof loose === "object" && loose !== null) {
+              parsedAttrs = flattenObject({ obj: loose as object });
+            }
+          }
+        } else if (typeof attributes === "object" && attributes !== null) {
+          parsedAttrs = flattenObject({ obj: attributes as object });
+        }
+        const raw =
+          parsedAttrs["ebot.config.TIMEOUT"] ??
+          parsedAttrs["ebot.config.timeout"];
+        if (raw !== undefined && raw !== null) {
+          timeoutSeconds = Number(raw);
+        }
+      } catch {
+        // ignore parse errors
+      }
+      if (timeoutSeconds === undefined || isNaN(timeoutSeconds)) continue;
+      const latencySeconds = latencyMs / 1000;
+      if (timeoutSeconds < latencySeconds) {
+        timeoutCount++;
+      } else {
+        timeinCount++;
+      }
+    }
+    return { timeinCount, timeoutCount };
+  }, [tableData]);
+
   type TableRow = (typeof tableData)[number];
 
   const dynamicAnnotationColumns: ColumnDef<TableRow>[] = useMemo(
@@ -1094,7 +1136,23 @@ export function TracesTable(props: TracesTableProps) {
           <Flex direction="row" gap="size-300" alignItems="center">
             <Flex direction="column" flex="none">
               <Text size="XS" color="text-700">
-                OK
+                TIMEIN
+              </Text>
+              <Text size="M" fontFamily="mono" color="success">
+                {timeoutCounts.timeinCount}
+              </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text size="XS" color="text-700">
+                TIMEOUT
+              </Text>
+              <Text size="M" fontFamily="mono" color="danger">
+                {timeoutCounts.timeoutCount}
+              </Text>
+            </Flex>
+            <Flex direction="column" flex="none">
+              <Text size="XS" color="text-700">
+                non-exception
               </Text>
               <Text size="M" fontFamily="mono" color="success">
                 {traceStatusCounts.okCount}
@@ -1102,7 +1160,7 @@ export function TracesTable(props: TracesTableProps) {
             </Flex>
             <Flex direction="column" flex="none">
               <Text size="XS" color="text-700">
-                ERROR
+                exception
               </Text>
               <Text size="M" fontFamily="mono" color="danger">
                 {traceStatusCounts.errorCount}
